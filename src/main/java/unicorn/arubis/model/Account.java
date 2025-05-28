@@ -1,11 +1,10 @@
 package unicorn.arubis.model;
 
-import unicorn.arubis.util.PasswordUtil;
-import unicorn.arubis.util.AccountValidation;
+import unicorn.arubis.util.*;
 import java.util.UUID;
 
 /**
- * Clase que representa el modelo de una cuenta de usuario.
+ * Clase que representa el modelo de una cuenta de usuario en el sistema.
  * Contiene todos los campos necesarios para gestionar información de usuarios, como nombre, email, teléfono,
  * nombre de usuario, contraseña y rol (estudiante, profesor y administrador).
  *
@@ -17,12 +16,20 @@ import java.util.UUID;
  *                   - Gestionar roles de administrador.
  *                   - Serializar y deserializar cuentas para almacenamiento en archivos.
  *
+ * @note Las contraseñas nunca se almacenan en texto plano, solo sus hashes.
+ *       La validación de datos se realiza mediante la clase AccountValidation.
+ *       Los roles están limitados a los definidos en el enum TipoCuenta.
+ * 
+ * @throws IllegalArgumentException Si los datos proporcionados no cumplen con las validaciones.
+ *
+ * @see PasswordUtil Para el manejo seguro de contraseñas
+ * @see AccountValidation Para la validación de datos
+ * @see TipoCuenta Para los roles disponibles
+ * @see Base Para la funcionalidad base de modelos
+ *
  * @author KNOWLES
  * @version 1.0
  * @since 2025-05-22
- * @see PasswordUtil
- * @see AccountValidation
- * @see Base
  */
 public class Account extends Base<Account> {
     private String id;
@@ -38,7 +45,7 @@ public class Account extends Base<Account> {
      * Constructor vacío necesario para la deserialización.
      */
     public Account(){
-        //this.tipoCuenta = TipoCuenta.ESTUDIANTE;
+        this.tipoCuenta = TipoCuenta.ESTUDIANTE;
     }
 
     /**
@@ -74,8 +81,10 @@ public class Account extends Base<Account> {
 
     /**
      * Obtiene el identificador único de la cuenta.
+     * Este ID es generado automáticamente al crear la cuenta y es inmutable.
      *
      * @return El UUID de la cuenta como String
+     * @see UUID Para el formato del identificador
      */
     @Override
     public String getId() { return this.id; }
@@ -145,7 +154,7 @@ public class Account extends Base<Account> {
     public void setId(String id) {
         this.id = id;
     }
-    
+
     /**
      * Establece un nuevo nombre de usuario con validación.
      *
@@ -280,24 +289,5 @@ public class Account extends Base<Account> {
             "Usuario: %s (%s)\nTeléfono: %s\nRol: %s", 
             getFullName(), user, phone, tipoCuenta.getDescripcion()
         );
-    }
-}
-
-/**
- * Enumeración que define los tipos de cuenta disponibles en el sistema.
- */
-enum TipoCuenta {
-    ADMIN("Administrador"),
-    PROFESOR("Profesor"),
-    ESTUDIANTE("Estudiante");
-
-    private final String descripcion;
-
-    TipoCuenta(String descripcion) {
-        this.descripcion = descripcion;
-    }
-
-    public String getDescripcion() {
-        return descripcion;
     }
 }

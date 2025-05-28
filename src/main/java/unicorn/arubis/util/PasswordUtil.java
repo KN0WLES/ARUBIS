@@ -26,6 +26,13 @@ public final class PasswordUtil {
 
     private PasswordUtil() {}
 
+    /**
+     * Genera un hash SHA-256 de la contraseña proporcionada.
+     * 
+     * @param password La contraseña en texto plano a hashear
+     * @return String El hash de la contraseña en formato hexadecimal
+     * @throws RuntimeException Si ocurre un error al generar el hash
+     */
     public static String hashPassword(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -44,6 +51,13 @@ public final class PasswordUtil {
         }
     }
 
+    /**
+     * Verifica si una contraseña coincide con un hash almacenado.
+     * 
+     * @param inputPassword La contraseña en texto plano a verificar
+     * @param storedHash El hash almacenado contra el cual comparar
+     * @return boolean true si la contraseña coincide, false en caso contrario
+     */
     public static boolean verifyPassword(String inputPassword, String storedHash) {
         return hashPassword(inputPassword).equals(storedHash);
     }

@@ -1,6 +1,7 @@
 package unicorn.arubis.model;
 
 import java.io.Serializable;
+import java.lang.ModuleLayer.Controller;
 import java.util.Objects;
 
 /**
@@ -13,6 +14,13 @@ import java.util.Objects;
  *                   - Deserializar texto a objetos del modelo.
  *                   - Generar información legible para presentación.
  *                   - Implementación genérica de equals y hashCode basada en ID.
+ *                   - Gestión de identificadores únicos para objetos del modelo.
+ * 
+ * @note Esta clase no debe manejar la persistencia directamente.
+ *       La gestión de colecciones (HashMap, etc.) debe realizarse en los controllers.
+ * 
+ * @see Account
+ * @see Controller
  * 
  * @param <T> Tipo de modelo que extiende esta clase base
  * @author KNOWLES

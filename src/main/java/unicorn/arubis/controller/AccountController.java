@@ -2,6 +2,7 @@ package unicorn.arubis.controller;
 
 import unicorn.arubis.model.Account;
 import unicorn.arubis.exceptions.*;
+import unicorn.arubis.util.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,15 +42,10 @@ public class AccountController implements IAccount {
         try {
             this.fileHandler.createFileIfNotExists(filePath);
             this.accounts = this.fileHandler.loadData(filePath);
-            if (this.accounts == null || this.accounts.isEmpty()) {
-                Account defaultAdmin = new Account("admin", "admin", "00000000", "admin@admin.com", "admin", "Admin123");
-                defaultAdmin.setTipoCuenta(TipoCuenta.ADMIN); // En lugar de setAdmin(true)
-                this.accounts = new ArrayList<>();
-                this.accounts.add(defaultAdmin);
-                saveChanges();
+            initializeDefaultAdmin();
         } catch (FileException e) {
             this.accounts = new ArrayList<>();
-            System.err.println("Error al cargar cuentas: " + e.getMessage());
+            System.err.println("Error al cargar cuentas, iniciando con lista vacía: " + e.getMessage());
         }
     }
 
@@ -98,11 +94,18 @@ public class AccountController implements IAccount {
 
     @Override
     public void updateLast(String username, String newLast) throws AccountException {
+        if (username == null || username.trim().isEmpty()) {
+            throw new AccountException("El nombre de usuario no puede estar vacío");
+        }
+        if (newLast == null || newLast.trim().isEmpty()) {
+            throw new AccountException("El nuevo apellido no puede estar vacío");
+        }
+        
         Account account = getByUsername(username);
         
         if (account == null) throw AccountException.userNotFound();
         
-        account.setApellido(newLast);
+        account.setApellido(newLast.trim());
         saveChanges();
     }
 
@@ -158,13 +161,13 @@ public class AccountController implements IAccount {
     @Override
     public void setAdminStatus(String username, boolean isAdmin) throws AccountException {
         Account account = getByUsername(username);
-    
+        
         if (account == null) throw AccountException.userNotFound();
         
         if (isAdmin) {
             account.setTipoCuenta(TipoCuenta.ADMIN);
         } else {
-            account.setTipoCuenta(TipoCuenta.ESTUDIANTE); // O el tipo por defecto deseado
+            account.setTipoCuenta(TipoCuenta.ESTUDIANTE);
         }
         saveChanges();
     }
@@ -203,6 +206,20 @@ public class AccountController implements IAccount {
         
         accounts.removeIf(a -> a.getUser().equals(username));
         saveChanges();
+    }
+
+    private void initializeDefaultAdmin() throws AccountException {
+        if (this.accounts == null || this.accounts.isEmpty()) {
+            this.accounts = new ArrayList<>();
+            try {
+                Account defaultAdmin = new Account("admin", "admin", "00000000", "admin@admin.com", "admin", "Admin123");
+                defaultAdmin.setTipoCuenta(TipoCuenta.ADMIN);
+                this.accounts.add(defaultAdmin);
+                saveChanges();
+            } catch (IllegalArgumentException e) {
+                throw new AccountException("Error creando cuenta admin por defecto: " + e.getMessage());
+            }
+        }
     }
 
     @Override
