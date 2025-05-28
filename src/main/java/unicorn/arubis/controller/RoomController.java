@@ -1,11 +1,10 @@
-package controller;
+package unicorn.arubis.controller;
 
-import interfaces.*;
-import model.Room;
-import exceptions.*;
+import unicorn.arubis.model.*;
+import unicorn.arubis.exceptions.*;
+import unicorn.arubis.util.*;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -28,147 +27,192 @@ import java.util.stream.Collectors;
  * @version 1.0
  * @since 2025-04-29
  * @see IRoom
- * @see Classroom
+ * @see Room
  * @see IFile
  * @see FileException
  * @see RoomException
  */
 public class RoomController implements IRoom {
     
-    private final IFile<Classroom> fileHandler;
-    private final String filePath = "src/main/java/data/rooms.txt";
-    private List<Classroom> rooms;
+    private final IFile<Room> fileHandler;
+    private final String filePath = "src/main/java/unicorn/arubis/dto/rooms.txt";
+    private Map<String, Room> rooms;
 
-    public RoomController(IFile<Classroom> fileHandler)throws RoomException {
+    public RoomController(IFile<Room> fileHandler)throws RoomException {
         this.fileHandler = fileHandler;
+        this.rooms = new HashMap<>();
+        
         try {
             this.fileHandler.createFileIfNotExists(filePath);
-            this.rooms = this.fileHandler.loadData(filePath);
+            List<Room> loadedRooms = this.fileHandler.loadData(filePath);
 
-            if (this.rooms == null || this.rooms.isEmpty()) {
-                this.rooms = new ArrayList<>();
+            if (loadedRooms == null || loadedRooms.isEmpty()) {
                 createDefaultRooms();
-                saveChanges();
+            } else {
+                loadedRooms.forEach(room -> rooms.put(room.getId(), room));
             }
+            saveChanges();
         } catch (FileException e) {
-            this.rooms = new ArrayList<>();
-            System.err.println("Error al cargar habitaciones: " + e.getMessage());
+            System.err.println("Error al cargar aulas: " + e.getMessage());
         }
     }
 
     private void saveChanges() throws RoomException {
         try {
-            fileHandler.saveData(rooms, filePath);
+            fileHandler.saveData(new ArrayList<>(rooms.values()), filePath);
         } catch (FileException e) {
             throw new RoomException("Error al guardar los cambios: " + e.getMessage());
         }
     }
 
     @Override
-    public void addRoom(Classroom room) throws RoomException {
-        if (rooms.stream().anyMatch(r -> r.getNombre().equalsIgnoreCase(room.getNombre()))) {
-            throw new RoomException("Ya existe una habitación con este nombre");
+    public void addRoom(Room room) throws RoomException {
+        if (rooms.containsKey(room.getId())) {
+            throw new RoomException("Ya existe un aula con este ID");
         }
         
-        rooms.add(room);
+        // Validar nombre único si es necesario
+        boolean nameExists = rooms.values().stream()
+            .anyMatch(r -> r.getNombre().equalsIgnoreCase(room.getNombre()));
+        
+        if (nameExists) {
+            throw new RoomException("Ya existe un aula con este nombre");
+        }
+        
+        rooms.put(room.getId(), room);
         saveChanges();
     }
 
     @Override
-    public Classroom getRoomById(String id) throws RoomException {
-        return rooms.stream()
-                .filter(r -> r.getId().equals(id))
-                .findFirst()
-                .orElseThrow(RoomException::notFound);
+    public Room getRoomById(String id) throws RoomException {
+        Room room = rooms.get(id);
+        if (room == null) {
+            throw new RoomException("Aula no encontrada");
+        }
+        return room;
     }
 
     @Override
-    public void updateRoom(Classroom room) throws RoomException {
-        Classroom existingRoom = getRoomById(room.getId());
-        
-        if (!existingRoom.getNombre().equals(room.getNombre()) &&
-            rooms.stream()
-                .filter(r -> !r.getId().equals(room.getId()))
-                .anyMatch(r -> r.getNombre().equalsIgnoreCase(room.getNombre()))) {
-            throw new RoomException("Ya existe una habitación con este nombre");
+    public void updateRoom(Room room) throws RoomException {
+        if (!rooms.containsKey(room.getId())) {
+            throw new RoomException("Aula no encontrada");
         }
         
-        rooms.removeIf(r -> r.getId().equals(room.getId()));
-        rooms.add(room);
+        // Validar nombre único si es necesario
+        boolean nameExists = rooms.values().stream()
+            .filter(r -> !r.getId().equals(room.getId()))
+            .anyMatch(r -> r.getNombre().equalsIgnoreCase(room.getNombre()));
         
+        if (nameExists) {
+            throw new RoomException("Ya existe un aula con este nombre");
+        }
+        
+        rooms.put(room.getId(), room);
         saveChanges();
     }
 
     @Override
     public void deleteRoom(String id) throws RoomException {
-        Classroom room = getRoomById(id);
+        Room room = getRoomById(id);
         
-        if (!room.isDisponible()) throw RoomException.isOccupied();
+        if (room.getDisponible() != 'L') {
+            throw new RoomException("El aula está ocupada o en mantenimiento");
+        }
         
-        rooms.removeIf(r -> r.getId().equals(id));
+        rooms.remove(id);
         saveChanges();
     }
 
     @Override
-    public List<Classroom> getRoomsByType(char type) throws RoomException {
-        if (!"IPDM".contains(String.valueOf(type))) throw RoomException.invalidType();
+    public List<Room> getRoomsByType(String type) throws RoomException {
+        if (!type.equalsIgnoreCase("FISICA") && !type.equalsIgnoreCase("VIRTUAL")) {
+            throw new RoomException("Tipo de aula inválido. Use 'FISICA' o 'VIRTUAL'");
+        }
         
-        return rooms.stream()
-                .filter(r -> r.getTipo() == type)
-                .collect(Collectors.toList());
+        if (type.equalsIgnoreCase("VIRTUAL")) {
+            return rooms.values().stream()
+                    .filter(r -> r.getTipo() == TipoRoom.VIRTUAL)
+                    .collect(Collectors.toList());
+        } else {
+            return rooms.values().stream()
+                    .filter(r -> r.getTipo() != TipoRoom.VIRTUAL)
+                    .collect(Collectors.toList());
+        }
     }
 
     @Override
-    public List<Classroom> getAvailableRooms() throws RoomException {
-        return rooms.stream()
-                .filter(Classroom::isDisponible)
-                .collect(Collectors.toList());
+    public List<Room> getRoomsByType(String type, String subType) throws RoomException{
+        if (type.equalsIgnoreCase("VIRTUAL")) {
+            return getRoomsByType("VIRTUAL");
+        }
+        
+        if (!type.equalsIgnoreCase("FISICA")) {
+            throw new RoomException("Tipo de aula inválido. Use 'FISICA' o 'VIRTUAL'");
+        }
+
+        try {
+            TipoRoom tipoRoom = TipoRoom.valueOf(subType.toUpperCase());
+            if (tipoRoom == TipoRoom.VIRTUAL) {
+                throw new RoomException("Subtipo inválido para aulas físicas");
+            }
+            
+            return rooms.values().stream()
+                    .filter(r -> r.getTipo() == tipoRoom)
+                    .collect(Collectors.toList());
+        } catch (IllegalArgumentException e) {
+            throw new RoomException("Subtipo inválido. Use 'AULA', 'LABORATORIO' o 'AUDITORIO'");
+        }
+    }
+    @Override
+    public List<Room> getAvailableRooms() throws RoomException {
+        return rooms.values().stream()
+            .filter(r -> r.getDisponible() == 'L')
+            .collect(Collectors.toList());
     }
 
     @Override
     public void setRoomMaintenance(String roomId, boolean inMaintenance) throws RoomException {
-        Classroom room = getRoomById(roomId);
-
-        room.setDisponible(!inMaintenance);
+        Room room = getRoomById(roomId);
+        room.setDisponible(inMaintenance ? 'M' : 'L');
         saveChanges();
     }
 
     @Override
     public void setRoomOccupied(String roomId, boolean occupied) throws RoomException {
-        Classroom room = getRoomById(roomId);
-
-        room.setDisponible(!occupied);
+        Room room = getRoomById(roomId);
+        room.setDisponible(occupied ? 'O' : 'L');
         saveChanges();
     }
 
     private void createDefaultRooms() throws RoomException {
-        for (int piso = 1; piso <= 5; piso++) {
-            for (int sala = 1; sala <= 10; sala++) {
-                String id = String.format("I%d%02d", piso, sala);
-                rooms.add(new Classroom(id, 'I', 20.0 + (piso * 2)));
+        for (int edificio = 1; edificio <= 3; edificio++) {
+            for (int piso = 1; piso <= 4; piso++) {
+                for (int aula = 1; aula <= 10; aula++) {
+                    String nombre = String.format("E%d-P%d-Aula%d", edificio, piso, aula);
+                    boolean tieneProyector = piso >= 3; // Aulas de pisos altos tienen proyector
+                    Room room = new Room(nombre, TipoRoom.AULA, 30, tieneProyector);
+                    rooms.put(room.getId(), room);
+                }
             }
         }
         
-        for (int piso = 1; piso <= 4; piso++) {
-            for (int sala = 1; sala <= 5; sala++) {
-                String id = String.format("P%d%02d", piso, sala);
-                rooms.add(new Classroom(id, 'P', 35.0 + (piso * 5)));
-            }
+        // Aulas virtuales
+        for (int i = 1; i <= 20; i++) {
+            Room room = new Room("Virtual-Sala" + i, TipoRoom.VIRTUAL, 100, true);
+            rooms.put(room.getId(), room);
         }
         
-        for (int piso = 1; piso <= 6; piso++) {
-            for (int sala = 1; sala <= 5; sala++) {
-                String id = String.format("D%d%02d", piso, sala);
-                rooms.add(new Classroom(id, 'D', 45.0 + (piso * 3)));
-            }
+        // Laboratorios (5 por edificio)
+        for (int i = 1; i <= 5; i++) {
+            Room lab = Room.crearLaboratorio(1, 1, 2, i, 20);
+            rooms.put(lab.getId(), lab);
         }
         
-        for (int piso = 1; piso <= 3; piso++) {
-            for (int sala = 1; sala <= 5; sala++) {
-                String id = String.format("M%d%02d", piso, sala);
-                rooms.add(new Classroom(id, 'M', 55.0 + (piso * 4)));
-
-            }
+        // Auditorios (1 por edificio)
+        for (int i = 1; i <= 3; i++) {
+            Room auditorio = Room.crearAuditorio(i, 200);
+            rooms.put(auditorio.getId(), auditorio);
         }
-    }
+        }
+    
 }

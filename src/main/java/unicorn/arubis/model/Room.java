@@ -1,5 +1,6 @@
 package unicorn.arubis.model;
 
+import unicorn.arubis.util.TipoRoom;
 import java.util.UUID;
 /**
  * Clase que representa el modelo de un aula en el sistema.
@@ -18,37 +19,39 @@ import java.util.UUID;
  * @see Base
  */
 
-public class Classroom extends Base<Classroom> {
+public class Room extends Base<Room> {
     private String id;
     private String nombre;      // Formato: "692A" (Bloque 6, Edificio 9, Piso 2, Aula A)
-    private boolean esFisica;   // true para aula física, false para virtual
     private char disponible;    // 'L': Libre, 'O': Ocupado, 'M': Mantenimiento
     private int capacidad;
     private boolean tieneProyector;
+    private TipoRoom tipo; // Tipo de aula: Virtual, Física, Laboratorio, Auditorio
 
     /**
      * Constructor vacío para serialización.
      */
-    public Classroom(){}
+    public Room(){}
     
     /**
      * Constructor principal para crear un aula.
      *
-     * @param nombre Código del aula (EBPA: Edificio-Bloque-Piso-Aula)
-     * @param esFisica true si es aula física, false si es virtual
+     * @param nombre Nombre del aula (ej. "E1-B2-P3-AulaA", "Laboratorio", "Auditorio", "Virtual-Sala1").
+     * @param esFisica Indica si el aula es física (true) o virtual (false).
      * @param capacidad Cantidad máxima de estudiantes
      * @param tieneProyector Si cuenta con proyector
      */
-    public Classroom(String nombre, boolean esFisica, int capacidad, boolean tieneProyector) {
-        if (capacidad <= 0)
-            throw new IllegalArgumentException("La capacidad debe ser mayor a 0");
-            
+    public Room(String nombre, TipoRoom tipo, int capacidad, boolean tieneProyector) {
         this.id = UUID.randomUUID().toString();
         this.nombre = nombre;
-        this.esFisica = esFisica;
+        this.tipo = tipo;
         this.capacidad = capacidad;
         this.tieneProyector = tieneProyector;
         this.disponible = 'L';
+        
+        // Auditorios y laboratorios siempre tienen proyector
+        if (tipo == TipoRoom.AUDITORIO || tipo == TipoRoom.LABORATORIO) {
+            this.tieneProyector = true;
+        }
     }
 
     /**
@@ -61,9 +64,9 @@ public class Classroom extends Base<Classroom> {
      * @param capacidad Cantidad máxima de estudiantes
      * @return 
      */
-    public static Classroom crearLaboratorio(int bloque, int edificio, int piso, int numLab, int capacidad) {
+    public static Room crearLaboratorio(int bloque, int edificio, int piso, int numLab, int capacidad) {
         String nombre = String.format("%d%d%dL%d", bloque, edificio, piso, numLab);
-        return new Classroom(nombre, true, capacidad, true);
+        return new Room(nombre, TipoRoom.LABORATORIO, capacidad, true);
     }
 
     /**
@@ -73,9 +76,9 @@ public class Classroom extends Base<Classroom> {
      * @param capacidad Cantidad máxima de estudiantes
      * @return 
      */
-    public static Classroom crearAuditorio(int edificio, int capacidad) {
+    public static Room crearAuditorio(int edificio, int capacidad) {
         String nombre = String.format("AUD-%d", edificio);
-        return new Classroom(nombre, true, capacidad, true);
+        return new Room(nombre, TipoRoom.AUDITORIO, capacidad, true);
     }
 
     /**
@@ -92,19 +95,13 @@ public class Classroom extends Base<Classroom> {
     public String getNombre() { return nombre; }
     
     /**
-     * Obtiene el tipo de la habitación.
-     * @return Tipo: 'I' (Individual), 'P' (Privado), 'D' (Dormitorio), 'M' (Mixto)
-     */
-    public boolean isEsFisica() { return esFisica; }
-    
-    /**
      * Obtiene el estado de disponibilidad de la habitación.
      * @return Estado: 'L' (Libre), 'O' (Ocupado), 'M' (Mantenimiento)
      */
     public char getDisponible() { return disponible; }
 
     /**
-     * Obtiene la capacidad máxima de estudiantes del aula.
+     * Obtiene la capacidad máxima de estudiantes del aulas.
      * @return Capacidad máxima de estudiantes
      */
     public int getCapacidad() { return capacidad; }
@@ -114,6 +111,15 @@ public class Classroom extends Base<Classroom> {
      * @return true si tiene proyector, false en caso contrario
      */
     public boolean isTieneProyector() { return tieneProyector; }
+
+    /**
+     * Obtiene el tipo de aula.
+     * Los tipos pueden ser: AULA, VIRTUAL, LABORATORIO o AUDITORIO.
+     * 
+     * @return El tipo de aula como enum TipoRoom
+     * @see TipoRoom Para los tipos disponibles
+     */
+    public TipoRoom getTipo() { return tipo; }
 
     /**
      * Establece la capacidad máxima de estudiantes del aula.
@@ -144,26 +150,31 @@ public class Classroom extends Base<Classroom> {
      * @param tipo Nuevo tipo de aula ('N', 'L' o 'A')
      * @throws IllegalArgumentException Si el tipo no es válido
      */
-    public void setTipo(char tipo) {
-        if (!"NLA".contains(String.valueOf(tipo)))
-            throw new IllegalArgumentException("Tipo inválido. Use N (Normal), L (Laboratorio) o A (Auditorio)");
+    public void setTipo(TipoRoom tipo) {
+        if (tipo == null)
+            throw new IllegalArgumentException("El tipo de aula no puede ser null");
+        
+        this.tipo = tipo;
         
         // Actualizar el nombre según el nuevo tipo
-        if (tipo == 'L') {
-            // Convertir a formato de laboratorio
-            String numeros = nombre.replaceAll("[^0-9]", "");
-            if (numeros.length() >= 3) {
-                this.nombre = numeros + "L1"; // Asigna como primer laboratorio por defecto
+        switch (tipo) {
+            case LABORATORIO -> {
+                // Convertir a formato de laboratorio
+                String numeros = nombre.replaceAll("[^0-9]", "");
+                if (numeros.length() >= 3) {
+                    this.nombre = numeros + "L1"; // Asigna como primer laboratorio por defecto
+                }
             }
-        } else if (tipo == 'A') {
-            // Convertir a formato de auditorio
-            String edificio = nombre.substring(1, 2); // Toma el número de edificio
-            this.nombre = "AUD-" + edificio;
+            case AUDITORIO -> {
+                // Convertir a formato de auditorio
+                String edificio = nombre.substring(1, 2); // Toma el número de edificio
+                this.nombre = "AUD-" + edificio;
+            }
+            default -> {} // Para AULA y VIRTUAL mantiene el nombre original
         }
-        // Para tipo 'N' mantiene el nombre original
         
         // Asegurar que tenga proyector si es laboratorio o auditorio
-        if (tipo != 'N') {
+        if (tipo == TipoRoom.LABORATORIO || tipo == TipoRoom.AUDITORIO) {
             this.tieneProyector = true;
         }
     }
@@ -188,18 +199,20 @@ public class Classroom extends Base<Classroom> {
     @Override
     public String toFile() {
         return String.join("|",
-            id, nombre, String.valueOf(esFisica),
+            id, nombre, tipo.name(),
             String.valueOf(capacidad), String.valueOf(disponible),
             String.valueOf(tieneProyector)
         );
     }
 
     @Override
-    public Classroom fromFile(String line) {
+    public Room fromFile(String line) {
         String[] parts = line.split("\\|");
-        Classroom room = new Classroom(
-            parts[1], Boolean.parseBoolean(parts[2]),
-            Integer.parseInt(parts[3]), Boolean.parseBoolean(parts[5])
+        Room room = new Room(
+            parts[1], 
+            TipoRoom.valueOf(parts[2]),
+            Integer.parseInt(parts[3]), 
+            Boolean.parseBoolean(parts[5])
         );
         room.id = parts[0];
         room.disponible = parts[4].charAt(0);
@@ -216,13 +229,13 @@ public class Classroom extends Base<Classroom> {
         };
 
         return String.format("""
-                             Aula: %s
-                             Tipo: %s
-                             Capacidad: %d estudiantes
-                             Proyector: %s
-                             Estado: %s""",
-            nombre, 
-            esFisica ? "Física" : "Virtual",
+                            Aula: %s
+                            Tipo: %s
+                            Capacidad: %d estudiantes
+                            Proyector: %s
+                            Estado: %s""",
+            nombre,
+            tipo.getDescripcion(),
             capacidad,
             tieneProyector ? "✅" : "❌",
             estadoStr

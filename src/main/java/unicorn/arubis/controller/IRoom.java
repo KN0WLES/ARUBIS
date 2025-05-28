@@ -1,7 +1,7 @@
-package interfaces;
+package unicorn.arubis.controller;
 
-import model.Room;
-import exceptions.RoomException;
+import unicorn.arubis.model.Room;
+import unicorn.arubis.exceptions.RoomException;
 import java.util.List;
 
 /**
@@ -9,7 +9,7 @@ import java.util.List;
  * Define los métodos necesarios para agregar, consultar, actualizar y eliminar habitaciones,
  * así como para gestionar su estado (disponibilidad, mantenimiento) y realizar búsquedas
  * por diferentes criterios.
- * 
+ *
  * @description Funcionalidades principales:
  *                   - Agregar nuevas habitaciones al sistema.
  *                   - Obtener habitaciones por identificador o tipo.
@@ -17,98 +17,106 @@ import java.util.List;
  *                   - Eliminar habitaciones del sistema.
  *                   - Listar habitaciones disponibles.
  *                   - Gestionar estados de ocupación y mantenimiento.
- * 
+ *
  * Ejemplo de uso:
  * <pre>
  *     IRoom roomManager = new RoomController(fileHandler);
- *     Room nuevaHabitacion = new Room("101", "Habitación Individual", 'I', 75.00, true);
- *     roomManager.addRoom(nuevaHabitacion);
+ *     Classroom nuevaAula = new Classroom("E1-B2-P3-AulaA", true, 30, true);
+ *     roomManager.addRoom(nuevaAula);
  * </pre>
- * 
+ *
  * @author KNOWLES
  * @version 1.0
  * @since 2025-04-29
  */
 public interface IRoom {
     /**
-     * Agrega una nueva habitación.
-     *                      La habitación debe contener:
-     *                          -ID único
-     *                          -Nombre
-     *                          -Tipo
-     *                          -Precio
+     * Agrega una nueva aula.
+     *                      El aula debe contener:
+     *                          -Nombre único
+     *                          -Tipo (física/virtual)
+     *                          -Capacidad
      *                          -Estado inicial.
-     *                       El sistema validará que no exista otra habitación con el mismo ID.
+     *                       El sistema validará que no exista otra aula con el mismo nombre.
      *
-     * @param room Habitación a agregar.
-     * @throws RoomException Si ocurre un error al agregar la habitación.
+     * @param room Aula a agregar.
+     * @throws RoomException Si ocurre un error al agregar el aula.
      */
-    void addRoom(Classroom room) throws RoomException;
+    void addRoom(Room room) throws RoomException;
 
     /**
-     * Obtiene una habitación por su ID.
+     * Obtiene un aula por su ID.
      *
-     * @param id Identificador de la habitación.
-     * @return La habitación correspondiente.
-     * @throws RoomException Si la habitación no existe.
+     * @param id Identificador del aula.
+     * @return El aula correspondiente.
+     * @throws RoomException Si el aula no existe.
      */
-    Classroom getRoomById(String id) throws RoomException;
+    Room getRoomById(String id) throws RoomException;
 
     /**
-     * Actualiza una habitación existente.
+     * Actualiza un aula existente.
      *
-     * @param room Habitación con los datos actualizados.
-     * @throws RoomException Si la habitación no existe o los datos son inválidos.
+     * @param room Aula con los datos actualizados.
+     * @throws RoomException Si el aula no existe o los datos son inválidos.
      */
-    void updateRoom(Classroom room) throws RoomException;
+    void updateRoom(Room room) throws RoomException;
 
     /**
-     * Elimina una habitación.
-     *                      Remueve completamente la habitación del sistema. Esta operación solo debe realizarse
-     *                      cuando la habitación ya no está en uso y no tiene reservas asociadas.
+     * Elimina un aula.
+     *                      Remueve completamente el aula del sistema. Esta operación solo debe realizarse
+     *                      cuando el aula ya no está en uso.
      * 
-     * @param id Identificador de la habitación a eliminar.
-     * @throws RoomException Si la habitación no existe.
+     * @param id Identificador del aula a eliminar.
+     * @throws RoomException Si el aula no existe o está ocupada.
      */
     void deleteRoom(String id) throws RoomException;
 
     /**
-     * Obtiene habitaciones por tipo.
-     *                      Los tipos pueden ser: 'I' (Individual), 'D' (Doble), 'S' (Suite), etc.,
-     *                      según la clasificación establecida en el sistema.
+     * Obtiene aulas filtrando por tipo físico/virtual.
      * 
-     * @param type Tipo de habitación.
-     * @return Lista de habitaciones del tipo especificado.
-     * @throws RoomException Si ocurre un error al obtener las habitaciones.
+     * @param type Tipo de aula: "FISICA" para aulas físicas, "VIRTUAL" para virtuales
+     * @return Lista de aulas del tipo especificado
+     * @throws RoomException Si el tipo especificado no es válido
      */
-    List<Classroom> getRoomsByType(char type) throws RoomException;
+    List<Room> getRoomsByType(String type) throws RoomException;
+    
+    /**
+     * Obtiene aulas filtrando por tipo físico y sub-tipo.
+     *                      El sub-tipo puede ser "LABORATORIO", "AUDITORIO", etc.
+     * 
+     * @param physicalType Tipo físico: "FISICA" o "VIRTUAL"
+     * @param subType Sub-tipo de aula (ej. "LABORATORIO", "AUDITORIO")
+     * @return Lista de aulas que coinciden con el tipo y sub-tipo especificados
+     * @throws RoomException Si el tipo o sub-tipo especificado no es válido
+     */
+    List<Room> getRoomsByType(String physicalType, String subType) throws RoomException;
 
     /**
-     * Obtiene habitaciones disponibles.
-     *                      Una habitación disponible es aquella que no está ocupada ni en mantenimiento.
+     * Obtiene aulas disponibles.
+     *                      Un aula disponible es aquella que no está ocupada ni en mantenimiento.
      * 
-     * @return Lista de habitaciones disponibles.
-     * @throws RoomException Si ocurre un error al obtener las habitaciones.
+     * @return Lista de aulas disponibles.
+     * @throws RoomException Si ocurre un error al obtener las aulas.
      */
-    List<Classroom> getAvailableRooms() throws RoomException;
+    List<Room> getAvailableRooms() throws RoomException;
 
     /**
-     * Establece el estado de mantenimiento de una habitación.
-     *                      Cuando una habitación está en mantenimiento, no puede ser reservada ni ocupada.
+     * Establece el estado de mantenimiento de un aula.
+     *                      Cuando un aula está en mantenimiento, no puede ser utilizada.
      * 
-     * @param roomId Identificador de la habitación.
-     * @param inMaintenance true si la habitación está en mantenimiento, false en caso contrario.
-     * @throws RoomException Si la habitación no existe.
+     * @param roomId Identificador del aula.
+     * @param inMaintenance true si el aula está en mantenimiento, false en caso contrario.
+     * @throws RoomException Si el aula no existe.
      */
     void setRoomMaintenance(String roomId, boolean inMaintenance) throws RoomException;
 
     /**
-     * Establece el estado de ocupación de una habitación.
-     *                      Este método se utiliza cuando un huésped ocupa o desocupa una habitación.
+     * Establece el estado de ocupación de un aula.
+     *                      Este método se utiliza cuando un aula es ocupada o desocupada.
      * 
-     * @param roomId Identificador de la habitación.
-     * @param occupied true si la habitación está ocupada, false en caso contrario.
-     * @throws RoomException Si la habitación no existe.
+     * @param roomId Identificador del aula.
+     * @param occupied true si el aula está ocupada, false en caso contrario.
+     * @throws RoomException Si el aula no existe.
      */
     void setRoomOccupied(String roomId, boolean occupied) throws RoomException;
 }
