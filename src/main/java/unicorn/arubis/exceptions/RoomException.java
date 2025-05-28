@@ -1,4 +1,4 @@
-package exceptions;
+package unicorn.arubis.exceptions;
 
 /**
  * Clase que actúa como controlador para la gestión de cuentas de usuario.

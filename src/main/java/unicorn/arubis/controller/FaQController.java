@@ -1,8 +1,7 @@
-package controller;
+package unicorn.arubis.controller;
 
-import interfaces.*;
-import model.FaQ;
-import exceptions.*;
+import unicorn.arubis.model.FaQ;
+import unicorn.arubis.exceptions.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,26 +27,26 @@ import java.util.List;
  * @version 1.0
  * @since 2025-04-29
  * @see IFaQ
- * @see News
+ * @see FaQ
  * @see IFile
  * @see FileException
  * @see FaQException
  */
 public class FaQController implements IFaQ {
     
-    private final IFile<News> fileHandler;
-    private final String filePath = "src/main/java/data/faqs.txt";
-    private List<News> faqs;
+    private final IFile<FaQ> fileHandler;
+    private final String filePath = "src/main/java/unicorn/arubis/dto/faqs.txt";
+    private List<FaQ> faqs;
 
-    public FaQController(IFile<News> fileHandler) throws FaQException{
+    public FaQController(IFile<FaQ> fileHandler) throws FaQException{
         this.fileHandler = fileHandler;
         try {
             this.fileHandler.createFileIfNotExists(filePath);
             this.faqs = this.fileHandler.loadData(filePath);
 
             if (this.faqs == null || this.faqs.isEmpty()) {
-                News default1FaQ = new News("Donde se encuentran ubicados","Calle Almagro 11, Madrid - CIF B65739856");
-                News default2FaQ = new News("Contactos","Teléfono: 4258813 Whatsapp: 65486014 Correo: info@unicorn.com.bo");
+                FaQ default1FaQ = new FaQ("Donde se encuentran ubicados","Calle Almagro 11, Madrid - CIF B65739856");
+                FaQ default2FaQ = new FaQ("Contactos","Teléfono: 4258813 Whatsapp: 65486014 Correo: info@unicorn.com.bo");
                 this.faqs = new ArrayList<>();
                 this.faqs.add(default1FaQ);
                 this.faqs.add(default2FaQ);
@@ -68,7 +67,7 @@ public class FaQController implements IFaQ {
     }
 
     @Override
-    public void addFaq(News faq) throws FaQException {
+    public void addFaq(FaQ faq) throws FaQException {
         if (faqs.stream().anyMatch(f -> f.getPregunta().equalsIgnoreCase(faq.getPregunta()))) {
             throw new FaQException("Esta pregunta ya existe en el sistema");
         }
@@ -78,7 +77,7 @@ public class FaQController implements IFaQ {
     }
 
     @Override
-    public News getFaqById(String id) throws FaQException {
+    public FaQ getFaqById(String id) throws FaQException {
         return faqs.stream()
                 .filter(f -> f.getId().equals(id))
                 .findFirst()
@@ -86,8 +85,8 @@ public class FaQController implements IFaQ {
     }
 
     @Override
-    public void updateFaq(News faq) throws FaQException {
-        News existingFaq = getFaqById(faq.getId());
+    public void updateFaq(FaQ faq) throws FaQException {
+        FaQ existingFaq = getFaqById(faq.getId());
         
         existingFaq.setPregunta(faq.getPregunta());
         existingFaq.setRespuesta(faq.getRespuesta());
@@ -97,18 +96,18 @@ public class FaQController implements IFaQ {
     }
 
     public boolean areFaqByPending() throws FaQException {
-        return faqs.stream().anyMatch(News::isPendiente);
+        return faqs.stream().anyMatch(FaQ::isPendiente);
     }
 
-    public List<News> getFaqByPending() throws FaQException {
+    public List<FaQ> getFaqByPending() throws FaQException {
         return faqs.stream()
-                .filter(News::isPendiente)
+                .filter(FaQ::isPendiente)
                 .toList();
     }
 
     @Override
     public void deleteFaq(String id) throws FaQException {
-        News existingFaq = getFaqById(id);
+        FaQ existingFaq = getFaqById(id);
         
         if (!faqs.remove(existingFaq)) throw new FaQException("No se pudo eliminar el FAQ");
 
@@ -116,7 +115,7 @@ public class FaQController implements IFaQ {
     }
 
     @Override
-    public List<News> getAllFaqs() throws FaQException {
+    public List<FaQ> getAllFaqs() throws FaQException {
         return new ArrayList<>(faqs);
     }
 }

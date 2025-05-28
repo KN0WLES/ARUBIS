@@ -1,7 +1,7 @@
-package interfaces;
+package unicorn.arubis.controller;
 
-import model.FaQ;
-import exceptions.FaQException;
+import unicorn.arubis.model.FaQ;
+import unicorn.arubis.exceptions.FaQException;
 import java.util.List;
 
 /**
@@ -41,7 +41,7 @@ public interface IFaQ {
      * @param faq Pregunta frecuente a agregar.
      * @throws FaQException Si ocurre un error al agregar la FAQ.
      */
-    void addFaq(News faq) throws FaQException;
+    void addFaq(FaQ faq) throws FaQException;
     
     /**
      * Obtiene una pregunta frecuente por su ID.
@@ -50,7 +50,7 @@ public interface IFaQ {
      * @return La pregunta frecuente correspondiente.
      * @throws FaQException Si la FAQ no existe.
      */
-    News getFaqById(String id) throws FaQException;
+    FaQ getFaqById(String id) throws FaQException;
 
     /**
      * Obtiene una lista de preguntas pendientes.
@@ -60,7 +60,7 @@ public interface IFaQ {
      * @return La pregunta frecuente correspondiente.
      * @throws FaQException Si la FAQ no existe.
      */
-    List<News> getFaqByPending() throws FaQException;
+    List<FaQ> getFaqByPending() throws FaQException;
 
     /**
      * Verificca que no existan preguntas frecuentes pendientes.
@@ -83,7 +83,7 @@ public interface IFaQ {
      * @param faq Pregunta frecuente con los datos actualizados.
      * @throws FaQException Si la FAQ no existe o los datos son inválidos.
      */
-    void updateFaq(News faq) throws FaQException;
+    void updateFaq(FaQ faq) throws FaQException;
     
     /**
      * Elimina una pregunta frecuente.
@@ -101,5 +101,5 @@ public interface IFaQ {
      * @return Lista de preguntas frecuentes.
      * @throws FaQException Si ocurre un error al obtener las FAQ.
      */
-    List<News> getAllFaqs() throws FaQException;
+    List<FaQ> getAllFaqs() throws FaQException;
 }
