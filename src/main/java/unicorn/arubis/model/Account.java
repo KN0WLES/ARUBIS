@@ -2,13 +2,13 @@ package unicorn.arubis.model;
 
 import unicorn.arubis.util.*;
 import java.util.UUID;
-
+ 
 /**
  * Clase que representa el modelo de una cuenta de usuario en el sistema.
  * Contiene todos los campos necesarios para gestionar información de usuarios, como nombre, email, teléfono,
  * nombre de usuario, contraseña y rol (estudiante, profesor y administrador).
  *
- * @description Funcionalidades principales:
+ * @description Funcionalidades principales: 
  *                   - Validar datos al crear o actualizar una cuenta (email, teléfono, usuario, contraseña).
  *                   - Generar automáticamente un identificador único (UUID) para cada cuenta.
  *                   - Hashing seguro de contraseñas utilizando `PasswordUtil`.
