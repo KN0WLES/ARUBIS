@@ -2,6 +2,8 @@ package unicorn.arubis.controller;
 
 import unicorn.arubis.model.*;
 import unicorn.arubis.exceptions.*;
+import unicorn.arubis.interfaces.IFile;
+import unicorn.arubis.interfaces.IRoom;
 import unicorn.arubis.util.*;
 
 import java.util.*;

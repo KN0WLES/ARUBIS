@@ -2,6 +2,9 @@ package unicorn.arubis.controller;
 
 import unicorn.arubis.model.Schedule;
 import unicorn.arubis.exceptions.ScheduleException;
+import unicorn.arubis.interfaces.IFile;
+import unicorn.arubis.interfaces.ISchedule;
+
 import java.util.*;
 import java.util.stream.Collectors;
 

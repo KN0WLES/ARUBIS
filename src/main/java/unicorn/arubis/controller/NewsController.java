@@ -2,6 +2,9 @@ package unicorn.arubis.controller;
 
 import unicorn.arubis.model.News;
 import unicorn.arubis.exceptions.NewsException;
+import unicorn.arubis.interfaces.IFile;
+import unicorn.arubis.interfaces.INews;
+
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;

@@ -1,4 +1,4 @@
-package unicorn.arubis.controller;
+package unicorn.arubis.interfaces;
 
 import unicorn.arubis.model.*;
 import unicorn.arubis.exceptions.*;

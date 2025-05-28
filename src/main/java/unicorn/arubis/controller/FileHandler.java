@@ -2,6 +2,7 @@ package unicorn.arubis.controller;
 
 import unicorn.arubis.model.Base;
 import unicorn.arubis.exceptions.FileException;
+import unicorn.arubis.interfaces.IFile;
 
 import java.io.*;
 import java.nio.file.Files;

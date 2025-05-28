@@ -1,4 +1,4 @@
-package unicorn.arubis.controller;
+package unicorn.arubis.interfaces;
 
 import unicorn.arubis.exceptions.FileException;
 import java.util.List;

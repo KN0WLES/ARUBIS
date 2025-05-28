@@ -2,6 +2,8 @@ package unicorn.arubis.controller;
 
 import unicorn.arubis.model.FaQ;
 import unicorn.arubis.exceptions.*;
+import unicorn.arubis.interfaces.IFaQ;
+import unicorn.arubis.interfaces.IFile;
 
 import java.util.ArrayList;
 import java.util.List;
