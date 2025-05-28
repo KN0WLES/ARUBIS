@@ -6,25 +6,28 @@ import unicorn.arubis.util.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Clase que actúa como controlador para la gestión de cuentas de usuario.
  * Proporciona la lógica de negocio necesaria para registrar, iniciar sesión, actualizar, eliminar cuentas
  * y gestionar privilegios de administrador.
- * Los datos de las cuentas se almacenan y recuperan desde un archivo utilizando un manejador de archivos genérico.
- * 
+ * Los datos de las cuentas se almacenan y recuperan desde archivos separados por tipo de cuenta.
+ *
  * @description Funcionalidades principales:
- *                   - Registrar nuevas cuentas de usuario.
- *                   - Iniciar sesión con credenciales de usuario.
- *                   - Actualizar información de las cuentas (nombre, apellido, teléfono, correo electrónico, contraseña).
- *                   - Eliminar cuentas de usuario.
- *                   - Gestionar privilegios de administrador.
- *                   - Recuperar cuentas por nombre de usuario, correo electrónico o ID.
- *                   - Listar todas las cuentas registradas.
- * 
+ * - Registrar nuevas cuentas de usuario.
+ * - Iniciar sesión con credenciales de usuario.
+ * - Actualizar información de las cuentas (nombre, apellido, teléfono, correo electrónico, contraseña).
+ * - Eliminar cuentas de usuario.
+ * - Gestionar privilegios de administrador.
+ * - Recuperar cuentas por nombre de usuario, correo electrónico o ID.
+ * - Listar todas las cuentas registradas.
+ *
  * @author KNOWLES
- * @version 1.0
- * @since 2025-04-29
+ * @version 1.1
+ * @since 2025-05-28
  * @see IAccount
  * @see Account
  * @see IFile
@@ -34,41 +37,78 @@ import java.util.List;
 public class AccountController implements IAccount {
     
     private final IFile<Account> fileHandler;
-    private final String filePath = "src/main/java/data/accounts.txt";
-    private List<Account> accounts;
+    //private final String filePath = "src/main/java/data/accounts.txt";
+    //private List<Account> accounts;
+    private final Map<TipoCuenta, String> filePaths;
+    private Map<String, Account> accounts;
 
     public AccountController(IFile<Account> fileHandler) throws AccountException {
         this.fileHandler = fileHandler;
+        this.filePaths = new HashMap<>();
+        // Define los nombres de archivo para cada tipo de cuenta 
+        this.filePaths.put(TipoCuenta.ADMIN,      "src/main/java/unicorn/arubis/dto/accounts_admin.txt");
+        this.filePaths.put(TipoCuenta.ESTUDIANTE, "src/main/java/unicorn/arubis/dto/accounts_estudiante.txt");
+        this.filePaths.put(TipoCuenta.PROFESOR,   "src/main/java/unicorn/arubis/dto/accounts_profesor.txt");
+
+        this.accounts = new HashMap<>(); // Inicializamos el HashMap
         try {
-            this.fileHandler.createFileIfNotExists(filePath);
-            this.accounts = this.fileHandler.loadData(filePath);
+            // Asegurarse de que todos los archivos existan y cargar datos de cada uno
+            for (Map.Entry<TipoCuenta, String> entry : filePaths.entrySet()) {
+                fileHandler.createFileIfNotExists(entry.getValue());
+                // Cargamos la lista y la convertimos a un mapa usando el ID como clave
+                List<Account> loadedAccounts = fileHandler.loadData(entry.getValue());
+                for (Account acc : loadedAccounts) {
+                    this.accounts.put(acc.getId(), acc);
+                }
+            }
             initializeDefaultAdmin();
         } catch (FileException e) {
-            this.accounts = new ArrayList<>();
+            this.accounts = new HashMap<>(); // En caso de error, inicializamos un mapa vacío
             System.err.println("Error al cargar cuentas, iniciando con lista vacía: " + e.getMessage());
         }
     }
 
     private void saveChanges() throws AccountException {
-        try {
-            fileHandler.saveData(accounts, filePath);
-        } catch (FileException e) {
-            throw new AccountException("Error al guardar los cambios: " + e.getMessage());
+        Map<TipoCuenta, List<Account>> accountsByType = accounts.values().stream() // Obtenemos la colección de cuentas
+                .collect(Collectors.groupingBy(Account::getTipoCuenta));
+
+        for (Map.Entry<TipoCuenta, String> entry : filePaths.entrySet()) {
+            TipoCuenta type = entry.getKey();
+            String path = entry.getValue();
+            List<Account> accountsToSave = accountsByType.getOrDefault(type, new ArrayList<>());
+            try {
+                fileHandler.saveData(accountsToSave, path);
+            } catch (FileException e) {
+                throw new AccountException("Error al guardar los cambios para el tipo de cuenta " + type + ": " + e.getMessage());
+            }
         }
     }
 
     @Override
     public void registerAccount(Account account) throws AccountException {
-        if (accounts.stream().anyMatch(a -> a.getUser().equals(account.getUser()))) {
-            throw AccountException.duplicateUser();
+        // Verificamos si el nombre de usuario o el email ya existen
+        if (accounts.values().stream().anyMatch(a -> a.getUser().equals(account.getUser()))) { //
+            throw AccountException.duplicateUser(); //
         }
-        
-        if (accounts.stream().anyMatch(a -> a.getEmail().equals(account.getEmail()))) {
-            throw new AccountException("El correo electrónico ya está registrado");
+
+        if (accounts.values().stream().anyMatch(a -> a.getEmail().equals(account.getEmail()))) { //
+            throw new AccountException("El correo electrónico ya está registrado"); //
         }
-        
-        accounts.add(account);
-        saveChanges();
+
+        accounts.put(account.getId(), account); // Agregamos la cuenta al HashMap usando su ID
+        saveChanges(); //
+
+        // Crear archivo de horarios para el usuario
+        createUserScheduleFile(account); //
+    }
+
+    private void createUserScheduleFile(Account account) throws AccountException {
+        String userFilePath = "src/main/java/unicorn/arubis/dto/schedules/" + account.getUser() + "_schedule.txt";
+        try {
+            fileHandler.createFileIfNotExists(userFilePath);
+        } catch (FileException e) {
+            throw new AccountException("Error al crear archivo de horarios para el usuario: " + e.getMessage());
+        }
     }
 
     @Override
@@ -125,10 +165,10 @@ public class AccountController implements IAccount {
         
         if (account == null) throw AccountException.userNotFound();
         
-        if (accounts.stream()
-                .filter(a -> !a.getUser().equals(username))
-                .anyMatch(a -> a.getEmail().equals(newEmail))) {
-            throw new AccountException("El correo electrónico ya está registrado");
+        if (accounts.values().stream() //
+                .filter(a -> !a.getUser().equals(username)) //
+                .anyMatch(a -> a.getEmail().equals(newEmail))) { //
+            throw new AccountException("El correo electrónico ya está registrado"); //
         }
         
         account.setEmail(newEmail);
@@ -159,22 +199,17 @@ public class AccountController implements IAccount {
     }
 
     @Override
-    public void setAdminStatus(String username, boolean isAdmin) throws AccountException {
+    public void promoteToAccount(String username, TipoCuenta newType) throws AccountException {
         Account account = getByUsername(username);
-        
         if (account == null) throw AccountException.userNotFound();
         
-        if (isAdmin) {
-            account.setTipoCuenta(TipoCuenta.ADMIN);
-        } else {
-            account.setTipoCuenta(TipoCuenta.ESTUDIANTE);
-        }
+        account.setTipoCuenta(newType);
         saveChanges();
     }
 
     @Override
     public Account getByUsername(String username) throws AccountException {
-        return accounts.stream()
+        return accounts.values().stream()
                 .filter(a -> a.getUser().equals(username))
                 .findFirst()
                 .orElse(null);
@@ -182,7 +217,7 @@ public class AccountController implements IAccount {
 
     @Override
     public Account getByEmail(String email) throws AccountException {
-        return accounts.stream()
+        return accounts.values().stream()
                 .filter(a -> a.getEmail().equals(email))
                 .findFirst()
                 .orElse(null);
@@ -190,7 +225,7 @@ public class AccountController implements IAccount {
 
     @Override
     public Account getById(String id) throws AccountException {
-        return accounts.stream()
+        return accounts.values().stream()
                 .filter(a -> a.getId().equals(id))
                 .findFirst()
                 .orElse(null);
@@ -202,28 +237,33 @@ public class AccountController implements IAccount {
         
         if (account == null) throw AccountException.userNotFound();
         
-        if (account.isAdmin()) throw AccountException.adminRestriction();
+        long adminCount = accounts.values().stream().filter(a -> a.getTipoCuenta() == TipoCuenta.ADMIN).count(); //
+        if (account.getTipoCuenta() == TipoCuenta.ADMIN && adminCount <= 1) { //
+            throw AccountException.adminRestriction(); // No se puede eliminar el último admin
+        }
         
-        accounts.removeIf(a -> a.getUser().equals(username));
+        accounts.remove(account.getId());
         saveChanges();
     }
 
     private void initializeDefaultAdmin() throws AccountException {
-        if (this.accounts == null || this.accounts.isEmpty()) {
-            this.accounts = new ArrayList<>();
+        // Verificar si ya existe un administrador por defecto en la lista total de cuentas
+        boolean adminExists = accounts.values().stream().anyMatch(a -> a.getUser().equals("admin") && a.getTipoCuenta() == TipoCuenta.ADMIN); //
+
+        if (!adminExists) { //
             try {
-                Account defaultAdmin = new Account("admin", "admin", "00000000", "admin@admin.com", "admin", "Admin123");
-                defaultAdmin.setTipoCuenta(TipoCuenta.ADMIN);
-                this.accounts.add(defaultAdmin);
-                saveChanges();
+                Account defaultAdmin = new Account("admin", "admin", "00000000", "admin@admin.com", "admin", "Hola1234"); //
+                defaultAdmin.setTipoCuenta(TipoCuenta.ADMIN); //
+                this.accounts.put(defaultAdmin.getId(), defaultAdmin); // Agregamos al HashMap
+                saveChanges(); // Guardar el nuevo admin en su archivo correspondiente
             } catch (IllegalArgumentException e) {
-                throw new AccountException("Error creando cuenta admin por defecto: " + e.getMessage());
+                throw new AccountException("Error creando cuenta admin por defecto: " + e.getMessage()); //
             }
         }
     }
 
     @Override
     public List<Account> getAllAccounts() throws AccountException {
-        return new ArrayList<>(accounts);
+        return new ArrayList<>(accounts.values());
     }
 }
