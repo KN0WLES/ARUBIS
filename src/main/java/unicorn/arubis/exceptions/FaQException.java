@@ -15,8 +15,20 @@ public class FaQException extends Exception {
     public FaQException(String message) {
         super(message);
     }
-    
+
     public static FaQException notFound() {
         return new FaQException("Pregunta no encontrada");
+    }
+
+    public static FaQException duplicateQuestion() {
+        return new FaQException("La pregunta ya existe");
+    }
+
+    public static FaQException invalidCategory() {
+        return new FaQException("Categoría de pregunta inválida");
+    }
+
+    public static FaQException emptyField() {
+        return new FaQException("Los campos no pueden estar vacíos");
     }
 }

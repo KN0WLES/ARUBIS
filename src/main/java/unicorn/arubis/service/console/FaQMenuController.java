@@ -1,9 +1,10 @@
 package unicorn.arubis.service.console;
 
-import unicorn.arubis.model.*;
-import unicorn.arubis.exceptions.*;
-import unicorn.arubis.interfaces.IFile;
 import unicorn.arubis.controller.*;
+import unicorn.arubis.exceptions.*;
+import unicorn.arubis.interfaces.*;
+import unicorn.arubis.model.*;
+import unicorn.arubis.util.*;
 import java.util.*;
 /**
  * Clase que representa el controlador de menú para preguntas frecuentes.
@@ -26,12 +27,12 @@ import java.util.*;
  */
 public class FaQMenuController {
     private FaQController faqController;
-    //private final Account account;
+    private final Account account;
     private final Scanner scanner;
 
-    public FaQMenuController(Account account) {
+    public FaQMenuController(Account account) throws FaQException{
         FaQ prototype = new FaQ();
-        //this.account = account;
+        this.account = account;
         IFile<FaQ> fileHandler = new FileHandler<>(prototype);
         
         try {

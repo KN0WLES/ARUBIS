@@ -44,9 +44,7 @@ public class Account extends Base<Account> {
     /**
      * Constructor vacío necesario para la deserialización.
      */
-    public Account(){
-        this.tipoCuenta = TipoCuenta.ESTUDIANTE;
-    }
+    public Account(){ }
 
     /**
      * Constructor que crea una nueva cuenta con validación de datos.
