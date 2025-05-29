@@ -4,20 +4,19 @@ import unicorn.arubis.model.*;
 import unicorn.arubis.exceptions.*;
 import unicorn.arubis.interfaces.IFile;
 import unicorn.arubis.controller.*;
-
 import java.util.*;
 /**
  * Clase que representa el controlador de menú para preguntas frecuentes.
  * Gestiona la interacción del usuario con el sistema de FAQ, permitiendo
  * consultar y gestionar preguntas y respuestas.
- * 
+ *
  * @description Funcionalidades principales:
  *                   - Mostrar y gestionar preguntas frecuentes.
  *                   - Permitir a usuarios hacer nuevas preguntas.
  *                   - Gestionar respuestas a preguntas pendientes.
  *                   - Realizar operaciones CRUD sobre FAQs.
  *                   - Validar entradas y manejar excepciones.
- * 
+ *
  * @author KNOWLES
  * @version 1.0
  * @since 2025-04-29

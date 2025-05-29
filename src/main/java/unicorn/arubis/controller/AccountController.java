@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.Map;
+import java.util.Random;
 import java.util.HashMap;
 
 /**
@@ -64,6 +65,7 @@ public class AccountController implements IAccount {
                 }
             }
             initializeDefaultAdmin();
+            initializeDefaultPrf();
         } catch (FileException e) {
             this.accounts = new HashMap<>(); // En caso de error, inicializamos un mapa vacío
             System.err.println("Error al cargar cuentas, iniciando con lista vacía: " + e.getMessage());
@@ -261,6 +263,139 @@ public class AccountController implements IAccount {
             } catch (IllegalArgumentException e) {
                 throw new AccountException("Error creando cuenta admin por defecto: " + e.getMessage()); //
             }
+        }
+    }
+
+
+    private void initializeDefaultPrf() throws AccountException {
+        // Datos de profesores por defecto
+        String[][] profesoresData = {
+            {"Samuel", "Acha", "Perez"},
+            {"Luis Roberto", "Agreda", "Corrales"},
+            {"Marcelo", "Antezana", "Camacho"},
+            {"Tatiana", "Aparicio", "Yuja"},
+            {"Ligia Jacqueline", "Aranibar", "La Fuente"},
+            {"Jose Richard", "Ayoroa", "Cardozo"},
+            {"Leticia", "Blanco", "Coca"},
+            {"Alex Isrrael", "Bustillos", "Vargas"},
+            {"Boris", "Calancha", "Navia"},
+            {"Indira", "Camacho", "Del Castillo"},
+            {"Cecilia Beatriz", "Castro", "Lazarte"},
+            {"Raul", "Catari", "Rios"},
+            {"Maria Benita", "Cespedes", "Guizada"},
+            {"Alex Danchgelo", "Choque", "Flores"},
+            {"Carlos Javier Alfredo", "Cosio", "Papadopolis"},
+            {"Vladimir Abel", "Costas", "Jauregui"},
+            {"Grover Humberto", "Cussi", "Nicolas"},
+            {"Jorge", "Davalos", "Brozovic"},
+            {"David Alfredo", "Delgadillo", "Cossio"},
+            {"David", "Escalera", "Fernandez"},
+            {"David", "Fernandez", "Ramos"},
+            {"Americo", "Fiorilo", "Lozada"},
+            {"Freddy", "Flores", "Flores"},
+            {"Hernan", "Flores", "Garcia"},
+            {"Juan Marcelo", "Flores", "Soliz"},
+            {"Corina", "Flores", "Villarroel"},
+            {"Ivan", "Fuentes", "Miranda"},
+            {"Juan Ruben", "Garcia", "Molina"},
+            {"Carmen Rosa", "Garcia", "Perez"},
+            {"Maria Estela", "Grilo", "Salvatierra"},
+            {"Osvaldo Walter", "Gutierrez", "Andrade"},
+            {"Gonzalo Enrique Antonio", "Guzman", "Orellana"},
+            {"Rocio", "Guzman", "Saavedra"},
+            {"K. Rolando", "Jaldin", "Rosales"},
+            {"Demetrio", "Juchani", "Bazualdo"},
+            {"Valentin", "Laime", "Zapata"},
+            {"Gualberto", "Leon", "Romero"},
+            {"Tito Anibal", "Lima", "Vacaflor"},
+            {"Roberto Juan", "Manchego", "Castellon"},
+            {"Carlos B.", "Manzur", "Soria"},
+            {"Vidal", "Matias", "Marca"},
+            {"Julio", "Medina", "Gamboa"},
+            {"Victor Ramiro", "Mejia", "Urquieta"},
+            {"Victor Hugo", "Montano", "Quiroga"},
+            {"Marco Antonio", "Montecinos", "Choque"},
+            {"Yony Richard", "Montoya", "Burgos"},
+            {"Rene", "Moreira", "Calizaya"},
+            {"Jose Gil", "Omonte", "Ojalvo"},
+            {"Jose Roberto", "Omonte", "Ojalvo"},
+            {"Miguel Angel", "Ordonez", "Salvatierra"},
+            {"Jorge Walter", "Orellana", "Araoz"},
+            {"Ronald Edgar", "Patino", "Tito"},
+            {"Magda Lena", "Peeters", "Ilonaa"},
+            {"Alfredo", "Pericon", "Balderrama"},
+            {"Abdon", "Quiroz", "Chavez"},
+            {"Santiago", "Relos", "Paco"},
+            {"Luz Maya", "Revollo", "Teran"},
+            {"Erika Patricia", "Rodriguez", "Bilbao"},
+            {"Juan Antonio", "Rodriguez", "Sejas"},
+            {"Ramiro", "Rojas", "Zurita"},
+            {"Patricia", "Romero", "Rodriguez"},
+            {"Carla", "Salazar", "Serrudo"},
+            {"Ariel Antonio", "Sarmiento", "Franco"},
+            {"Galina", "Shitikov", "Gagarina"},
+            {"Maria Ritha Carola", "Siles", "Marzana"},
+            {"Jose Antonio", "Soruco", "Maita"},
+            {"Fidel", "Taborga", "Acha"},
+            {"Darlong Howard", "Taylor", "Terrazas"},
+            {"Juan", "Terrazas", "Lobo"},
+            {"Juan Carlos", "Terrazas", "Vargas"},
+            {"Rosemary", "Torrico", "Bascope"},
+            {"Felix", "Ugarte", "Cejas"},
+            {"Hernan", "Ustariz", "Vargas"},
+            {"Tania Andrea", "Valero", "Malele"},
+            {"Marco Antonio", "Vallejo", "Camacho"},
+            {"Ademar Marcelo", "Vargas", "Antezana"},
+            {"Emir Felix", "Vargas", "Peredo"},
+            {"Michael Huascar", "Vasquez", "Carrillo"},
+            {"Gustavo Adolfo", "Veizaga", ""},
+            {"Jimmy", "Villarroel", "Novillo"},
+            {"Henry Frank", "Villarroel", "Tapia"},
+            {"Oscar A.", "Zabalaga", "Montano"},
+            {"Jhomil Efrain", "Zambrana", "Burgos"}
+        };
+
+        for (String[] profesor : profesoresData) {
+            String nombre = profesor[0];
+            String apellido1 = profesor[1];
+            String apellido2 = profesor[2];
+            String nombreCompleto = nombre + " " + apellido1 + " " + apellido2;
+            
+            // Generar email y username
+            String iniciales = String.valueOf(nombre.charAt(0) + 
+                                            apellido1.charAt(0) + 
+                                            apellido2.charAt(0)).toLowerCase();
+            String carnet = String.format("%07d", new Random().nextInt(10000000));
+            String email = iniciales + "." + carnet + "@prf.umss.edu";
+            String username = iniciales + carnet;
+
+            // Verificar si el profesor ya existe
+            boolean profesorExists = accounts.values().stream()
+                    .anyMatch(a -> a.getUser().equals(username));
+
+            if (!profesorExists) {
+                try {
+                    Account profesorAccount = new Account(
+                        nombre,
+                        apellido1 + " " + apellido2,
+                        "00000000",
+                        email,
+                        username,
+                        "Hola1234"
+                    );
+                    profesorAccount.setTipoCuenta(TipoCuenta.PROFESOR);
+                    this.accounts.put(profesorAccount.getId(), profesorAccount);
+                } catch (IllegalArgumentException e) {
+                    System.err.println("Error creando cuenta profesor " + nombreCompleto + ": " + e.getMessage());
+                    continue;
+                }
+            }
+        }
+        
+        try {
+            saveChanges();
+        } catch (AccountException e) {
+            throw new AccountException("Error guardando cuentas de profesores: " + e.getMessage());
         }
     }
 
