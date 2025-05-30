@@ -238,6 +238,8 @@ public class Account extends Base<Account> {
      * Establece un nuevo correo electrónico para el usuario.
      *
      * @param email El nuevo correo electrónico
+     * @throws IllegalArgumentException Si el email no cumple con el formato estándar
+     * @see AccountValidation#validateEmail() Método de validación utilizado
      */
     public void setEmail(String email) {
         if (!AccountValidation.validateEmail(email))
@@ -250,11 +252,17 @@ public class Account extends Base<Account> {
      *
      * @param inputPassword La contraseña en texto plano a verificar
      * @return true si la contraseña es correcta, false en caso contrario
+     * @see PasswordUtil#verifyPassword() Método de verificación seguro
      */
     public boolean verifyPassword(String inputPassword) {
         return PasswordUtil.verifyPassword(inputPassword, hashedPassword);
     }
-
+     /**
+     * Formatea los datos del usuario en un String separado por pipes ("|") para almacenamiento en archivo.
+     * @return String - Datos del usuario en formato concatenado para almacenamiento
+     *  @see String#join() Método utilizado para concatenación
+     * @see TipoCuenta#name() Conversión de enum a String
+     */
     @Override
     public String toFile() {
         return String.join("|", 
@@ -262,7 +270,16 @@ public class Account extends Base<Account> {
             hashedPassword, tipoCuenta.name()
         );
     }
-
+     /**
+     * Crea un objeto Account a partir de una cadena en formato pipe ("|").
+     * 
+     * @param line Línea de texto con los datos separados por pipes (generada por toFile())
+     * @return Account - Objeto con los datos cargados
+     * @throws IllegalArgumentException Si el formato no tiene exactamente 8 campos
+     * @throws IllegalArgumentException Si el tipo de cuenta no es válido (valueOf falla)
+     * @see #toFile() Método complementario de serialización
+     * @see TipoCuenta#valueOf() Conversión de String a enum
+     */
     @Override
     public Account fromFile(String line) {
         String[] parts = line.split("\\|");
@@ -282,7 +299,13 @@ public class Account extends Base<Account> {
         
         return account;
     }
-
+     /**
+     * Genera un resumen legible del usuario con nombre completo, username, teléfono y rol.
+     * 
+     * @return String - Información formateada del usuario
+     *  @see #getFullName() Método que genera el nombre completo
+     * @see TipoCuenta#getDescripcion() Descripción legible del rol
+     */
     @Override
     public String getInfo() {
         return String.format(

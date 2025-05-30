@@ -119,6 +119,7 @@ public class Classroom extends Base<Classroom> {
      * Establece la capacidad máxima de estudiantes del aula.
      * @param capacidad Nueva capacidad máxima de estudiantes
      * @throws IllegalArgumentException Si la capacidad es menor o igual a 0
+     *  @see #getCapacidad() Método complementario
      */
     public void setCapacidad(int capacidad) {
         if (capacidad <= 0)
@@ -143,6 +144,8 @@ public class Classroom extends Base<Classroom> {
      * 
      * @param tipo Nuevo tipo de aula ('N', 'L' o 'A')
      * @throws IllegalArgumentException Si el tipo no es válido
+     * @see #getTipo() Método complementario
+     * @see #nombre Campo afectado por las transformaciones
      */
     public void setTipo(char tipo) {
         if (!"NLA".contains(String.valueOf(tipo)))
@@ -177,6 +180,7 @@ public class Classroom extends Base<Classroom> {
      *
      * @param estado Nuevo estado de disponibilidad ('L', 'O' o 'M')
      * @throws IllegalArgumentException Si el estado no es válido
+     *  @see #getDisponible() Método complementario
      */
     public void setDisponible(char estado) {
         if (!"LOM".contains(String.valueOf(estado)))
@@ -184,7 +188,11 @@ public class Classroom extends Base<Classroom> {
         this.disponible = estado;
     }
 
-
+     /** Serializa los datos del aula en formato CSV con pipes.
+     * Formato: id|nombre|esFisica|capacidad|disponible|tieneProyector
+     * @see String#join() Método utilizado para la concatenación
+     * @see #fromFile(String) Método complementario para deserialización
+     */
     @Override
     public String toFile() {
         return String.join("|",
@@ -193,7 +201,15 @@ public class Classroom extends Base<Classroom> {
             String.valueOf(tieneProyector)
         );
     }
-
+     /**
+     * Crea un Classroom desde una línea de texto con formato:
+     * id|nombre|esFisica|capacidad|disponible|tieneProyector
+     *  @throws ArrayIndexOutOfBoundsException Si faltan campos
+}    * @throws NumberFormatException Si capacidad no es un número válido
+     * @throws IllegalArgumentException Si el formato es incorrecto
+     * 
+     * @see #toFile() Método complementario de serialización
+     */
     @Override
     public Classroom fromFile(String line) {
         String[] parts = line.split("\\|");
@@ -205,7 +221,13 @@ public class Classroom extends Base<Classroom> {
         room.disponible = parts[4].charAt(0);
         return room;
     }
-
+     /**
+     * Genera un resumen visual del aula con iconos descriptivos.
+     * 
+     * @return String - Info formateada con estado, tipo y características
+     *  @see #disponible Conversión de estado a texto con iconos
+     * @see #tieneProyector Representación visual con emojis
+     */
     @Override
     public String getInfo() {
         String estadoStr = switch(disponible) {

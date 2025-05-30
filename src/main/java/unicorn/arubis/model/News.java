@@ -3,6 +3,7 @@ package unicorn.arubis.model;
 import java.util.UUID;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 /**
  * Clase que representa el modelo de notificaciones en el sistema.
@@ -88,13 +89,26 @@ public class News extends Base<News> {
     public void setLeida(boolean leida) {
         this.leida = leida;
     }
-
+     /**
+     * Establece el tipo de notificación validando que no sea nulo o vacío.
+     * 
+     * @param tipoNotificacion Tipo de notificación a asignar
+     * @throws IllegalArgumentException Si el parámetro es nulo o vacío
+     */
     public void setTipoNotificacion(String tipoNotificacion) {
         if (tipoNotificacion == null || tipoNotificacion.trim().isEmpty())
             throw new IllegalArgumentException("El tipo de notificación no puede estar vacío");
         this.tipoNotificacion = tipoNotificacion;
     }
-
+     /**
+     * Serializa la notificación a formato CSV con pipe ("|") como delimitador.
+     * 
+     * Formato: id|mensaje|fecha|leida|tipoNotificacion|destinatarioId
+     * - Fecha en formato ISO (yyyy-MM-dd'T'HH:mm:ss)
+     * - "ALL" si no hay destinatario específico
+     * 
+     * @return String - Datos de la notificación listos para almacenar
+     */
     @Override
     public String toFile() {
         return String.join("|", 
@@ -106,7 +120,14 @@ public class News extends Base<News> {
             destinatarioId != null ? destinatarioId : "ALL"
         );
     }
-
+     /**
+     * Reconstruye una notificación a partir de una línea de texto en formato CSV con pipes.
+     * 
+     * @param line Línea con formato: id|mensaje|fechaISO|leida|tipo|destinatario
+     * @return News - Objeto notificación reconstruido
+     * @throws DateTimeParseException Si el formato de fecha es inválido
+     * @throws ArrayIndexOutOfBoundsException Si faltan campos
+     */
     @Override
     public News fromFile(String line) {
         String[] parts = line.split("\\|");
@@ -116,7 +137,14 @@ public class News extends Base<News> {
         notification.leida = Boolean.parseBoolean(parts[3]);
         return notification;
     }
-
+     /**
+     * Genera una representación legible de la notificación con formato:
+     * [TIPO] Mensaje
+     * Fecha: dd/MM/yyyy HH:mm
+     * Estado: Leída/No leída
+     * 
+     * @return String - Información formateada de la notificación
+     */
     @Override
     public String getInfo() {
         return String.format(

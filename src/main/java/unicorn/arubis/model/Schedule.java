@@ -60,11 +60,19 @@ public class Schedule extends Base<Schedule> {
     public void setHoraFin(String horaFin) { this.horaFin = horaFin; }
     public void setMateriaId(String materiaId) { this.materiaId = materiaId; }
     public void setClassroomId(String classroomId) { this.classroomId = classroomId; }
-
+     /**
+     * Serializa el horario en formato CSV con pipes.
+     * Formato: id|diaSemana|horaInicio|horaFin|materiaId|classroomId
+     */
     @Override
     public String toFile() {
         return String.join("|", id, diaSemana, horaInicio, horaFin, materiaId, classroomId);
     }
+     /**
+     * Deserializa un Schedule desde una línea CSV con pipes.
+     * Formato requerido: id|diaSemana|horaInicio|horaFin|materiaId|classroomId
+     * @throws IllegalArgumentException Si el formato no tiene exactamente 6 campos
+     */
 
     @Override
     public Schedule fromFile(String line) {
@@ -76,7 +84,12 @@ public class Schedule extends Base<Schedule> {
         schedule.id = parts[0];
         return schedule;
     }
-
+     /**
+     * Genera resumen legible del horario con formato:
+     * Horario: DIA HH:MM-HH:MM
+     * Materia ID: [id] 
+     * Classroom ID: [id]
+     */
     @Override
     public String getInfo() {
         return String.format("Horario: %s %s-%s\nMateria ID: %s\nClassroom ID: %s", diaSemana, horaInicio, horaFin, materiaId, classroomId);

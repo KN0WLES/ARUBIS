@@ -1,75 +1,123 @@
 @startuml
 
-class Base {
-    +getId(): String
-    +equals(Object o): boolean
-    +hashCode(): int
-    +toFile(): String
-    +fromFile(String line): T
-    +getInfo(): String
+public abstract class Base {
+    public abstract String getId();
+    public abstract boolean equals(Object o);
+    public abstract int hashCode();
+    public abstract String toFile();
+    public abstract <T> T fromFile(String line);
+    public abstract String getInfo();
 }
 
-class Account {
-    +id: String
-    +nombre: String
-    +apellido: String
-    +phone: String
-    +email: String
-    +user: String
-    +hashedPassword: String
-    +tipoCuenta: TipoCuenta
-    +getId(): String
-    +getNombre(): String
-    +getApellido(): String
-    +getFullName(): String
-    +getPhone(): String
-    +getEmail(): String
-    +getUser(): String
-    +getTipoCuenta(): TipoCuenta
-    +setPhone(String phone)
-    +setUser(String user)
-    +setPassword(String newPassword)
-    +setTipoCuenta(TipoCuenta tipoCuenta)
-    +isAdmin(): boolean
-    +isProfesor(): boolean
-    +isEstudiante(): boolean
+import java.time.LocalDateTime;
+
+public class Account extends Base {
+    private String id;
+    private String nombre;
+    private String apellido;
+    private String phone;
+    private String email;
+    private String user;
+    private String hashedPassword; 
+    private TipoCuenta tipoCuenta;
+
+    @Override
+    public String getId() { return id; }
+
+    public String getNombre() { return nombre; }
+    public String getApellido() { return apellido; }
+    public String getFullName() { return nombre + " " + apellido; }
+    public String getPhone() { return phone; }
+    public String getEmail() { return email; }
+    public String getUser() { return user; }
+    public TipoCuenta getTipoCuenta() { return tipoCuenta; }
+
+    public void setPhone(String phone) { this.phone = phone; }
+    public void setUser(String user) { this.user = user; }
+    public void setPassword(String newPassword) { this.hashedPassword = hashPassword(newPassword); }
+    public void setTipoCuenta(TipoCuenta tipoCuenta) { this.tipoCuenta = tipoCuenta; }
+
+    public boolean isAdmin() { return tipoCuenta == TipoCuenta.ADMIN; }
+    public boolean isProfesor() { return tipoCuenta == TipoCuenta.PROFESOR; }
+    public boolean isEstudiante() { return tipoCuenta == TipoCuenta.ESTUDIANTE; }
+
+    @Override
+    public boolean equals(Object o) { /* implementación */ }
+    @Override
+    public int hashCode() { /* implementación */ }
+    @Override
+    public String toFile() { /* implementación */ }
+    @Override
+    public Account fromFile(String line) { /* implementación */ }
+    @Override
+    public String getInfo() { /* implementación */ }
+    
+    private String hashPassword(String password) { /* implementación */ }
 }
 
-class News {
-    +id: String
-    +mensaje: String
-    +fecha: LocalDateTime
-    +leida: boolean
-    +tipoNotificacion: String
-    +destinatarioId: String
-    +getId(): String
-    +getMensaje(): String
-    +getFecha(): LocalDateTime
-    +isLeida(): boolean
-    +getTipoNotificacion(): String
-    +getDestinatarioId(): String
-    +setMensaje(String mensaje)
-    +setLeida(boolean leida)
-    +setTipoNotificacion(String tipoNotificacion)
+public class News extends Base {
+    private String id;
+    private String mensaje;
+    private LocalDateTime fecha;
+    private boolean leida;
+    private String tipoNotificacion;
+    private String destinatarioId;
+
+    @Override
+    public String getId() { return id; }
+    public String getMensaje() { return mensaje; }
+    public LocalDateTime getFecha() { return fecha; }
+    public boolean isLeida() { return leida; }
+    public String getTipoNotificacion() { return tipoNotificacion; }
+    public String getDestinatarioId() { return destinatarioId; }
+
+    public void setMensaje(String mensaje) { this.mensaje = mensaje; }
+    public void setLeida(boolean leida) { this.leida = leida; }
+    public void setTipoNotificacion(String tipoNotificacion) { this.tipoNotificacion = tipoNotificacion; }
+
+    @Override
+    public boolean equals(Object o) { /* implementación */ }
+    @Override
+    public int hashCode() { /* implementación */ }
+    @Override
+    public String toFile() { /* implementación */ }
+    @Override
+    public News fromFile(String line) { /* implementación */ }
+    @Override
+    public String getInfo() { /* implementación */ }
 }
 
-class Room {
-    +id: String
-    +nombre: String
-    +esFisica: boolean
-    +disponible: char
-    +capacidad: int
-    +tieneProyector: boolean
-    +getId(): String
-    +getNombre(): String
-    +isEsFisica(): boolean
-    +getDisponible(): char
-    +getCapacidad(): int
-    +isTieneProyector(): boolean
-    +setCapacidad(int capacidad)
-    +setTieneProyector(boolean tieneProyector)
-    +setTipo(char tipo)
-    +setDisponible(char estado)
+public class Room extends Base {
+    private String id;
+    private String nombre;
+    private boolean esFisica;
+    private char disponible;
+    private int capacidad;
+    private boolean tieneProyector;
+
+    @Override
+    public String getId() { return id; }
+    public String getNombre() { return nombre; }
+    public boolean isEsFisica() { return esFisica; }
+    public char getDisponible() { return disponible; }
+    public int getCapacidad() { return capacidad; }
+    public boolean isTieneProyector() { return tieneProyector; }
+
+    public void setCapacidad(int capacidad) { this.capacidad = capacidad; }
+    public void setTieneProyector(boolean tieneProyector) { this.tieneProyector = tieneProyector; }
+    public void setTipo(char tipo) { this.esFisica = (tipo == 'F'); }
+    public void setDisponible(char estado) { this.disponible = estado; }
+
+    @Override
+    public boolean equals(Object o) { /* implementación */ }
+    @Override
+    public int hashCode() { /* implementación */ }
+    @Override
+    public String toFile() { /* implementación */ }
+    @Override
+    public Room fromFile(String line) { /* implementación */ }
+    @Override
+    public String getInfo() { /* implementación */ }
 }
 
 Base <|-- Account

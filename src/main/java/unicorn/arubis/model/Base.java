@@ -44,6 +44,8 @@ public abstract class Base<T> implements Serializable {
      *
      * @param o El objeto a comparar con esta objeto
      * @return true si el objeto es una cuenta con el mismo id, false en caso contrario
+     * @see Objects#equals() Método seguro para nulls utilizado
+     * @see #hashCode() Debe sobrescribirse consistentemente
      */
     @Override
     public boolean equals(Object o) {
