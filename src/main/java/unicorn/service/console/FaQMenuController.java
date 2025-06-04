@@ -45,7 +45,7 @@ public class FaQMenuController {
         this.scanner = new Scanner(System.in);
     }
 
-    public void showUserMenu() {
+    /*public void showUserMenu() {
         int option;
         do {
             mostrarMensajeCentrado("==== SISTEMA DE GESTIÓN DE PREGUNTAS FRECUENTES ====");
@@ -340,5 +340,15 @@ public class FaQMenuController {
         } catch (Exception e) {
             System.err.println("Error al inicializar el menú: " + e.getMessage());
         }
+    }*/
+
+    public void showAdmMenu(){
+        System.out.println("\nEn desarrollo");
+    }
+    public void showEstMenu(){
+        System.out.println("\nEn desarrollo");
+    }
+    public void showPrfMenu(){
+        System.out.println("\nEn desarrollo");
     }
 }

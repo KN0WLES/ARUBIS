@@ -32,5 +32,14 @@ public class NewsMenuController {
         this.scanner = new Scanner(System.in);
     }
 
+    public void showAdmMenu(){
+        System.out.println("\nEn desarrollo");
+    }
+    public void showEstMenu(){
+        System.out.println("\nEn desarrollo");
+    }
+    public void showPrfMenu(){
+        System.out.println("\nEn desarrollo");
+    }
 
 }

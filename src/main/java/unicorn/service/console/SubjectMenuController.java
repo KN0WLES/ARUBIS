@@ -13,8 +13,8 @@ public class SubjectMenuController {
     private SubjectController Subjectcontroller;
     private ScheduleController scheduleController;
     private AccountController accountController;
-    private final Account account;
-    private final Scanner scanner;
+    private Account account;
+    private Scanner scanner;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     public SubjectMenuController(Account account) throws SubjectException, ScheduleException, AccountException{
@@ -31,6 +31,16 @@ public class SubjectMenuController {
             System.err.println("Error al inicializar SubjectController: " + e.getMessage());
             this.Subjectcontroller = null;
         }
+    }
+
+    public void showAdmMenu(){
+        System.out.println("\nEn desarrollo");
+    }
+    public void showEstMenu(){
+        System.out.println("\nEn desarrollo");
+    }
+    public void showPrfMenu(){
+        System.out.println("\nEn desarrollo");
     }
 }
 

@@ -16,7 +16,7 @@ public class SubjectController implements ISubject {
     private Map<String, Subject> subjects;
     private ISchedule scheduleController;
 
-    public SubjectController(IFile<Subject> fileHandler, ISchedule scheduleController) throws SubjectException {
+    public SubjectController(IFile<Subject> fileHandler) throws SubjectException {
         this.fileHandler = fileHandler;
         this.scheduleController = scheduleController;
         this.subjects = new HashMap<>();

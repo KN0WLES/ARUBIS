@@ -20,15 +20,15 @@ import java.io.File;
  * Proporciona la lógica de negocio necesaria para registrar, iniciar sesión, actualizar, eliminar cuentas
  * y gestionar privilegios de administrador.
  * Los datos de las cuentas se almacenan y recuperan desde archivos separados por tipo de cuenta.
- *
- * @description Funcionalidades principales:
- * - Registrar nuevas cuentas de usuario.
- * - Iniciar sesión con credenciales de usuario.
- * - Actualizar información de las cuentas (nombre, apellido, teléfono, correo electrónico, contraseña).
- * - Eliminar cuentas de usuario.
- * - Gestionar privilegios de administrador.
- * - Recuperar cuentas por nombre de usuario, correo electrónico o ID.
- * - Listar todas las cuentas registradas.
+
+ * &#064;description  Funcionalidades principales:
+ *                  - Registrar nuevas cuentas de usuario.
+ *                  - Iniciar sesión con credenciales de usuario.
+ *                  - Actualizar información de las cuentas (nombre, apellido, teléfono, correo electrónico, contraseña).
+ *                  - Eliminar cuentas de usuario.
+ *                  - Gestionar privilegios de administrador.
+ *                  - Recuperar cuentas por nombre de usuario, correo electrónico o ID.
+ *                  - Listar todas las cuentas registradas.
  *
  * @author KNOWLES
  * @version 1.1
@@ -42,8 +42,6 @@ import java.io.File;
 public class AccountController implements IAccount {
     
     private final IFile<Account> fileHandler;
-    //private final String filePath = "src/main/java/data/accounts.txt";
-    //private List<Account> accounts;
     private final Map<TipoCuenta, String> filePaths;
     private Map<String, Account> accounts;
 
@@ -51,9 +49,9 @@ public class AccountController implements IAccount {
         this.fileHandler = fileHandler;
         this.filePaths = new HashMap<>();
         // Define los nombres de archivo para cada tipo de cuenta 
-        this.filePaths.put(TipoCuenta.ADMIN,      "src/main/java/unicorn/arubis/dto/accounts_admin.txt");
-        this.filePaths.put(TipoCuenta.ESTUDIANTE, "src/main/java/unicorn/arubis/dto/accounts_estudiante.txt");
-        this.filePaths.put(TipoCuenta.PROFESOR,   "src/main/java/unicorn/arubis/dto/accounts_profesor.txt");
+        this.filePaths.put(TipoCuenta.ADMIN,      "src/main/java/unicorn/dto/accounts_admin.txt");
+        this.filePaths.put(TipoCuenta.ESTUDIANTE, "src/main/java/unicorn/dto/accounts_estudiante.txt");
+        this.filePaths.put(TipoCuenta.PROFESOR,   "src/main/java/unicorn/dto/accounts_profesor.txt");
 
         this.accounts = new HashMap<>(); // Inicializamos el HashMap
         try {
@@ -109,7 +107,7 @@ public class AccountController implements IAccount {
     }
 
     private void createUserScheduleFile(Account account) throws AccountException {
-        String baseDir = "src/main/java/unicorn/arubis/dto/schedules/";
+        String baseDir = "src/main/java/unicorn/dto/schedules/";
         String subDir;
 
         // Determinar la subcarpeta según el tipo de cuenta

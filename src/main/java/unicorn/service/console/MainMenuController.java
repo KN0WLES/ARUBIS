@@ -7,6 +7,7 @@ import unicorn.util.*;
 import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
+import java.io.Console;
 
 /**
  * Clase principal que controla el menú principal del sistema.
@@ -39,8 +40,10 @@ public class MainMenuController {
     private ScheduleMenuController ScheduleMenu;
     private SubjectMenuController SubjectMenu;
     private Scanner scanner;
+    private Console console;
     private Account currentAccount;
     private Logo logo;
+
 
     public MainMenuController() {
         try {
@@ -52,6 +55,7 @@ public class MainMenuController {
             this.ScheduleMenu = new ScheduleMenuController(currentAccount);
             this.roomMenu = new RoomMenuController(currentAccount);
             this.scanner = new Scanner(System.in);
+            this.console = System.console();
             this.logo = new Logo();
         } catch (AccountException | FaQException | NewsException | RoomException |  ScheduleException | SubjectException e) {
             System.err.println("Error initializing menus: " + e.getMessage());
@@ -68,6 +72,7 @@ public class MainMenuController {
             this.ScheduleMenu = new ScheduleMenuController(currentAccount);
             this.roomMenu = new RoomMenuController(currentAccount);
             this.scanner = new Scanner(System.in);
+            this.console = System.console();
             this.logo = new Logo();
         } catch (AccountException | FaQException | NewsException | RoomException |  ScheduleException | SubjectException e) {
             System.err.println("Error initializing menus: " + e.getMessage());
@@ -124,20 +129,17 @@ public class MainMenuController {
     private void showMainMenu() {
         mostrarMensajeCentrado(" MENU PRINCIPAL ");
         if (currentAccount.getTipoCuenta() == TipoCuenta.ADMIN){
-            System.out.println("1. Mi Cuenta");
+            System.out.println("1. Gestión de Cuentas");
             System.out.println("2. Gestión de Horarios");
-            System.out.println("3. Gestión de Profesores");
-            System.out.println("4. Gestión de Estudiantes");
-            System.out.println("5. Gestión de Aulas");
-            System.out.println("6. Gestión de Comunicados");
-            System.out.println("7. Ver todos los horarios");
-            System.out.println("8. Preguntas Frecuentes");
-            System.out.println("9. Cerrar sesión");
+            System.out.println("3. Gestión de Aulas");
+            System.out.println("4. Gestión de Comunicados");
+            System.out.println("5. Preguntas Frecuentes");
+            System.out.println("6. Mi Cuenta");
+            System.out.println("7. Cerrar sesión");
             System.out.println("0. Salir");
         } else if (currentAccount.getTipoCuenta() == TipoCuenta.PROFESOR) {
             System.out.println("1. Mi Cuenta");
             System.out.println("2. Mi Horario");
-            //System.out.println("3. Lista de Estudiantes por materia");
             System.out.println("4. Cambio de horarios");
             System.out.println("5. Comunicados por materia");
             System.out.println("6. Ayuda y soporte");
@@ -160,14 +162,13 @@ public class MainMenuController {
         try {
             if (currentAccount.getTipoCuenta() == TipoCuenta.ADMIN) {
                 switch (option) {
-                    case 1 -> accountMenu.showMyAccount(currentAccount);
-                    case 2 -> accountMenu.showAdminMenu();
-                    case 3 -> NewsMenu.showAdminMenu();
-                    case 4 -> SubjectMenu.showAdminMenu();
-                    case 5 -> roomMenu.showAdminMenu();
-                    case 6 -> ScheduleMenu.showAdminMenu();
-                    case 7 -> faqMenu.showAdminMenu();
-                    case 8 -> logout();
+                    case 1 -> accountMenu.showAdmMenu();
+                    case 2 -> ScheduleMenu.showAdmMenu();
+                    case 3 -> roomMenu.showAdmMenu();
+                    case 4 -> NewsMenu.showAdmMenu();
+                    case 5 -> faqMenu.showAdmMenu();
+                    case 6 -> accountMenu.showMyAccount(currentAccount);
+                    case 7 -> logout();
                     case 0 -> {
                         System.out.println("¡Gracias por usar el sistema!");
                         System.exit(0);
@@ -177,11 +178,11 @@ public class MainMenuController {
             } else if (currentAccount.getTipoCuenta() == TipoCuenta.PROFESOR){
                 switch (option) {
                     case 1 -> accountMenu.showMyAccount(currentAccount);
-                    case 2 -> NewsMenu.showUserMenu();
-                    case 3 -> SubjectMenu.showUserMenu();
-                    case 4 -> roomMenu.showUserMenu();
-                    case 5 -> ScheduleMenu.showUserMenu();
-                    case 6 -> faqMenu.showUserMenu();
+                    case 2 -> NewsMenu.showPrfMenu();
+                    case 3 -> SubjectMenu.showPrfMenu();
+                    case 4 -> roomMenu.showPrfMenu();
+                    case 5 -> ScheduleMenu.showPrfMenu();
+                    case 6 -> faqMenu.showPrfMenu();
                     case 7 -> logout();
                     case 0 -> {
                         System.out.println("¡Gracias por usar el sistema!");
@@ -192,11 +193,11 @@ public class MainMenuController {
             } else if (currentAccount.getTipoCuenta() == TipoCuenta.ESTUDIANTE) {
                 switch (option) {
                     case 1 -> accountMenu.showMyAccount(currentAccount);
-                    case 2 -> NewsMenu.showUserMenu();
-                    case 3 -> SubjectMenu.showUserMenu();
-                    case 4 -> roomMenu.showUserMenu();
-                    case 5 -> ScheduleMenu.showUserMenu();
-                    case 6 -> faqMenu.showUserMenu();
+                    case 2 -> NewsMenu.showEstMenu();
+                    case 3 -> SubjectMenu.showEstMenu();
+                    case 4 -> roomMenu.showEstMenu();
+                    case 5 -> ScheduleMenu.showEstMenu();
+                    case 6 -> faqMenu.showEstMenu();
                     case 7 -> logout();
                     case 0 -> {
                         System.out.println("¡Gracias por usar el sistema!");
@@ -211,10 +212,16 @@ public class MainMenuController {
     }
 
     private void login() {
+        if (console == null) {
+            System.out.println("Error: la consola no está disponible. Ejecute desde una terminal.");
+            return;
+        }
+
         System.out.print("Usuario: ");
-        String username = scanner.nextLine();
-        System.out.print("Contraseña: ");
-        String password = scanner.nextLine();
+        String username = console.readLine();
+
+        char[] pwdArray = console.readPassword("Contraseña: ");
+        String password = new String(pwdArray);
 
         try {
             currentAccount = accountMenu.login(username, password);
@@ -232,6 +239,11 @@ public class MainMenuController {
     }
 
     private void register() {
+        if (console == null) {
+            System.out.println("Error: la consola no está disponible. Ejecute desde una terminal.");
+            return;
+        }
+
         mostrarMensajeCentrado("REGISTRO DE NUEVO USUARIO");
 
         System.out.print("Nombre: ");
@@ -249,8 +261,9 @@ public class MainMenuController {
         System.out.print("Usuario: ");
         String user = scanner.nextLine();
 
-        System.out.print("Contraseña: ");
-        String password = scanner.nextLine();
+        char[] pwdArray = console.readPassword("Contraseña: ");
+        String password = new String(pwdArray);
+
         try {
             accountMenu.registerAccount(nombre, apellido, phone, email, user, password);
             mostrarMensajeCentrado("¡Cuenta registrada exitosamente!");
