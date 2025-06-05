@@ -1,5 +1,6 @@
 package unicorn.arubis.model;
 
+import unicorn.arubis.util.TipoCuenta;
 import unicorn.arubis.util.TipoRoom;
 import java.util.UUID;
 /**
@@ -26,6 +27,7 @@ public class Room extends Base<Room> {
     private int capacidad;
     private boolean tieneProyector;
     private TipoRoom tipo; // Tipo de aula: Virtual, Física, Laboratorio, Auditorio
+    private TipoCuenta tipoCuenta;
 
     /**
      * Constructor vacío para serialización.
@@ -131,6 +133,12 @@ public class Room extends Base<Room> {
             throw new IllegalArgumentException("La capacidad debe ser mayor a 0");
         this.capacidad = capacidad;
     }
+    public void setNombre(String nombre){
+         if(nombre == null || nombre.isEmpty()){
+            throw new IllegalArgumentException("El nombre del aula no puede ser nula o vacio");
+
+         }
+    }
 
     /**
      * Establece si el aula cuenta con proyector.
@@ -193,6 +201,16 @@ public class Room extends Base<Room> {
         if (!"LOM".contains(String.valueOf(estado)))
             throw new IllegalArgumentException("Estado inválido. Use L (Libre), O (Ocupado) o M (Mantenimiento)");
         this.disponible = estado;
+    }
+
+     public boolean isAdmin() {
+        return tipoCuenta == TipoCuenta.ADMIN;
+    }
+    public boolean isEst() {
+        return tipoCuenta == TipoCuenta.ESTUDIANTE;
+    }
+    public boolean isDoc() {
+        return tipoCuenta == TipoCuenta.PROFESOR;
     }
 
 

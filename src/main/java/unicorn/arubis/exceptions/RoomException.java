@@ -34,4 +34,5 @@ public class RoomException extends Exception {
     public static RoomException capacityExceeded() {
         return new RoomException("Capacidad del aula excedida");
     }
+
 }

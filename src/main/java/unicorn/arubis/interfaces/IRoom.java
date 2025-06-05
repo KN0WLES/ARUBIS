@@ -119,4 +119,7 @@ public interface IRoom {
      * @throws RoomException Si el aula no existe.
      */
     void setRoomOccupied(String roomId, boolean occupied) throws RoomException;
+    /**
+    *jwhgdichedjcnedojneoc
+    */
 }
