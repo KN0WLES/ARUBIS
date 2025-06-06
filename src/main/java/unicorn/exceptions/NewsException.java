@@ -17,14 +17,18 @@ public class NewsException extends Exception {
     }
 
     public static NewsException notFound() {
-        return new NewsException("Notificación no encontrada");
+        return new NewsException("Notificación no encontrada.");
     }
 
     public static NewsException invalidType() {
-        return new NewsException("Tipo de notificación inválido");
+        return new NewsException("Tipo de notificación no válido o no soportado");
     }
 
     public static NewsException emptyMessage() {
-        return new NewsException("El mensaje no puede estar vacío");
+        return new NewsException("El mensaje no puede estar vacío.");
+    }
+
+    public static NewsException accessDenied() {
+        return new NewsException("Acceso denegado: Rol no autorizado.");
     }
 }
