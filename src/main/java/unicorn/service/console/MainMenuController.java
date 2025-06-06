@@ -114,8 +114,8 @@ public class MainMenuController {
 
         int option = readIntOption("Seleccione una opción: ");
         switch (option) {
-            case 1 -> login();
-            case 2 -> register();
+            //case 1 -> login();
+            //case 2 -> register();
             case 0 -> System.exit(0);
             default -> System.out.println("Opción inválida");
         }
@@ -158,104 +158,23 @@ public class MainMenuController {
 
     private void handleMainMenuOption(int option) {
         try {
-            if (currentAccount.getTipoCuenta() == TipoCuenta.ADMIN) {
-                switch (option) {
-                    case 1 -> accountMenu.showMyAccount(currentAccount);
-                    case 2 -> accountMenu.showAdminMenu();
-                    case 3 -> NewsMenu.showAdminMenu();
-                    case 4 -> SubjectMenu.showAdminMenu();
-                    case 5 -> roomMenu.showAdminMenu();
-                    case 6 -> ScheduleMenu.showAdminMenu();
-                    case 7 -> faqMenu.showAdminMenu();
-                    case 8 -> logout();
-                    case 0 -> {
-                        System.out.println("¡Gracias por usar el sistema!");
-                        System.exit(0);
-                    }
-                    default -> System.out.println("Opción inválida");
+            switch (option) {
+                //case 1 -> accountMenu.showMyAccount(currentAccount);
+                //case 2 -> accountMenu.showAdminMenu();
+                case 3 -> NewsMenu.showMenu();
+                //case 4 -> SubjectMenu.showAdminMenu();
+                //case 5 -> roomMenu.showAdminMenu();
+                //case 6 -> ScheduleMenu.showAdminMenu();
+                //case 7 -> faqMenu.showAdminMenu();
+                case 8 -> logout();
+                case 0 -> {
+                    System.out.println("¡Gracias por usar el sistema!");
+                    System.exit(0);
                 }
-            } else if (currentAccount.getTipoCuenta() == TipoCuenta.PROFESOR){
-                switch (option) {
-                    case 1 -> accountMenu.showMyAccount(currentAccount);
-                    case 2 -> NewsMenu.showUserMenu();
-                    case 3 -> SubjectMenu.showUserMenu();
-                    case 4 -> roomMenu.showUserMenu();
-                    case 5 -> ScheduleMenu.showUserMenu();
-                    case 6 -> faqMenu.showUserMenu();
-                    case 7 -> logout();
-                    case 0 -> {
-                        System.out.println("¡Gracias por usar el sistema!");
-                        System.exit(0);
-                    }
-                    default -> System.out.println("Opción inválida");
-                }
-            } else if (currentAccount.getTipoCuenta() == TipoCuenta.ESTUDIANTE) {
-                switch (option) {
-                    case 1 -> accountMenu.showMyAccount(currentAccount);
-                    case 2 -> NewsMenu.showUserMenu();
-                    case 3 -> SubjectMenu.showUserMenu();
-                    case 4 -> roomMenu.showUserMenu();
-                    case 5 -> ScheduleMenu.showUserMenu();
-                    case 6 -> faqMenu.showUserMenu();
-                    case 7 -> logout();
-                    case 0 -> {
-                        System.out.println("¡Gracias por usar el sistema!");
-                        System.exit(0);
-                    }
-                    default -> System.out.println("Opción inválida");
-                }
+                default -> System.out.println("Opción inválida");
             }
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
-        }
-    }
-
-    private void login() {
-        System.out.print("Usuario: ");
-        String username = scanner.nextLine();
-        System.out.print("Contraseña: ");
-        String password = scanner.nextLine();
-
-        try {
-            currentAccount = accountMenu.login(username, password);
-            if (currentAccount != null) {
-                this.accountMenu = new AccountMenuController(currentAccount);
-                this.NewsMenu = new NewsMenuController(currentAccount);
-                this.SubjectMenu = new SubjectMenuController(currentAccount);
-                this.faqMenu = new FaQMenuController(currentAccount);
-                this.ScheduleMenu = new ScheduleMenuController(currentAccount);
-                this.roomMenu = new RoomMenuController(currentAccount);
-            }
-        } catch (AccountException | FaQException | NewsException | RoomException |  ScheduleException | SubjectException e) {
-            System.out.println("Error: " + e.getMessage());
-        }
-    }
-
-    private void register() {
-        mostrarMensajeCentrado("REGISTRO DE NUEVO USUARIO");
-
-        System.out.print("Nombre: ");
-        String nombre = scanner.nextLine();
-
-        System.out.print("Apellido: ");
-        String apellido = scanner.nextLine();
-
-        System.out.print("Teléfono: ");
-        String phone = scanner.nextLine();
-
-        System.out.print("Email: ");
-        String email = scanner.nextLine();
-
-        System.out.print("Usuario: ");
-        String user = scanner.nextLine();
-
-        System.out.print("Contraseña: ");
-        String password = scanner.nextLine();
-        try {
-            accountMenu.registerAccount(nombre, apellido, phone, email, user, password);
-            mostrarMensajeCentrado("¡Cuenta registrada exitosamente!");
-        } catch (AccountException e) {
-            System.out.println("Error registering account: " + e.getMessage());
         }
     }
 

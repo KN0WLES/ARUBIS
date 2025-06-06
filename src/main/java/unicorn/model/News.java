@@ -1,5 +1,6 @@
 package unicorn.model;
 
+import unicorn.util.*;
 import java.util.UUID;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -25,8 +26,9 @@ public class News extends Base<News> {
     private String mensaje;
     private LocalDateTime fecha;
     private boolean leida;
-    private String tipoNotificacion; // SISTEMA, HORARIO, AULA, etc.
+    private TipoNews tipoNotificacion; // SISTEMA, HORARIO, AULA, etc.
     private String destinatarioId; // ID del usuario destinatario
+    private String senderId;      // ID del usuario que envía la notificación
 
     /**
      * Constructor vacío para serialización.
@@ -40,11 +42,13 @@ public class News extends Base<News> {
      * @param destinatarioId Para quién es (null si es para todos)
      */
 
-    public News(String mensaje, String tipoNotificacion, String destinatarioId) {
-        if (mensaje == null || mensaje.trim().isEmpty())
+    public News(String mensaje, TipoNews tipoNotificacion, String destinatarioId, String senderId) {
+        if (mensaje == null || mensaje.trim().isEmpty()) {
             throw new IllegalArgumentException("El mensaje no puede estar vacío");
-        if (tipoNotificacion == null || tipoNotificacion.trim().isEmpty())
-            throw new IllegalArgumentException("El tipo de notificación no puede estar vacío");
+        }
+        if (tipoNotificacion == null) {
+            throw new IllegalArgumentException("El tipo de notificación es requerido");
+        }
 
         this.id = UUID.randomUUID().toString();
         this.mensaje = mensaje;
@@ -52,7 +56,9 @@ public class News extends Base<News> {
         this.leida = false;
         this.tipoNotificacion = tipoNotificacion;
         this.destinatarioId = destinatarioId;
+        this.senderId = senderId;
     }
+
     // Métodos para obtener información
     /** @return El ID único de la notificación */
     @Override
@@ -68,11 +74,12 @@ public class News extends Base<News> {
     public boolean isLeida() { return leida; }
 
      /** @return El tipo de notificación */
-    public String getTipoNotificacion() { return tipoNotificacion; }
+    public TipoNews getTipoNotificacion() { return tipoNotificacion; }
 
       /** @return Para quién es (null = para todos) */
     public String getDestinatarioId() { return destinatarioId; }
 
+    public String getSenderId() { return senderId; }
 
     // Métodos para modificar la notificación
     /** Cambia el texto de la notificación
@@ -89,42 +96,55 @@ public class News extends Base<News> {
         this.leida = leida;
     }
 
-    public void setTipoNotificacion(String tipoNotificacion) {
-        if (tipoNotificacion == null || tipoNotificacion.trim().isEmpty())
-            throw new IllegalArgumentException("El tipo de notificación no puede estar vacío");
+    public void setTipoNotificacion(TipoNews tipoNotificacion) {
+        if (tipoNotificacion == null) {
+            throw new IllegalArgumentException("El tipo de notificación es requerido");
+        }
         this.tipoNotificacion = tipoNotificacion;
     }
 
     @Override
     public String toFile() {
-        return String.join("|", 
-            id, 
-            mensaje, 
-            fecha.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
-            String.valueOf(leida),
-            tipoNotificacion,
-            destinatarioId != null ? destinatarioId : "ALL"
+        return String.join("|",
+                id,
+                mensaje,
+                fecha.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME),
+                String.valueOf(leida),
+                tipoNotificacion.name(),
+                destinatarioId != null ? destinatarioId : "ALL",
+                senderId != null ? senderId : "SYSTEM"
         );
     }
 
     @Override
     public News fromFile(String line) {
         String[] parts = line.split("\\|");
-        News notification = new News(parts[1], parts[4], parts[5].equals("ALL") ? null : parts[5]);
+        if (parts.length != 7) {
+            throw new IllegalArgumentException("Formato de línea inválido. Se esperaban 7 partes, se encontraron: " + parts.length);
+        }
+
+        News notification = new News();
         notification.id = parts[0];
+        notification.mensaje = parts[1];
         notification.fecha = LocalDateTime.parse(parts[2], DateTimeFormatter.ISO_LOCAL_DATE_TIME);
         notification.leida = Boolean.parseBoolean(parts[3]);
+        notification.tipoNotificacion = TipoNews.valueOf(parts[4]);
+        notification.destinatarioId = parts[5].equals("ALL") ? null : parts[5];
+        notification.senderId = parts[6].equals("SYSTEM") ? null : parts[6];
+
         return notification;
     }
 
     @Override
     public String getInfo() {
         return String.format(
-            "[%s] %s\nFecha: %s\nEstado: %s",
-            tipoNotificacion,
-            mensaje,
-            fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
-            leida ? "Leída" : "No leída"
+                "[%s] De: %s\nPara: %s\nMensaje: %s\nFecha: %s\nEstado: %s",
+                tipoNotificacion,
+                senderId != null ? senderId : "Sistema",
+                destinatarioId != null ? destinatarioId : "Todos",
+                mensaje,
+                fecha.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")),
+                leida ? "Leída" : "No leída"
         );
     }
 }
