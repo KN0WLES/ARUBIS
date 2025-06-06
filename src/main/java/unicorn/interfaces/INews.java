@@ -1,54 +1,113 @@
 package unicorn.interfaces;
 
-import unicorn.model.*;
-import unicorn.exceptions.*;
-
+import unicorn.model.News;
+import unicorn.exceptions.NewsException;
+import unicorn.util.TipoNews;
 import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * Interfaz para la gestión de preguntas frecuentes (FAQ).
- * Define los métodos necesarios para crear, obtener, actualizar y eliminar preguntas frecuentes,
- * así como para gestionar el estado de las preguntas pendientes de revisión.
+ * Interfaz para la gestión de notificaciones del sistema.
+ * Define los métodos necesarios para enviar, gestionar y consultar notificaciones,
+ * tanto globales como específicas por usuario o materia.
  *
  * @description Funcionalidades principales:
- *                   - Agregar nuevas preguntas frecuentes.
- *                   - Obtener preguntas frecuentes por ID.
- *                   - Listar preguntas pendientes de revisión.
- *                   - Verificar existencia de preguntas pendientes.
- *                   - Actualizar preguntas existentes.
- *                   - Eliminar preguntas.
- *                   - Listar todas las preguntas registradas.
- *
- * Ejemplo de uso:
- * <pre>
- *     IFaQ faqManager = new FaQController(fileHandler);
- *     FaQ nuevaFaq = new FaQ("F001", "¿Cómo reservo una habitación?", "Puede realizar su reserva...");
- *     faqManager.addFaq(nuevaFaq);
- * </pre>
+ *                   - Envío de notificaciones globales y específicas
+ *                   - Consulta de notificaciones por diversos criterios
+ *                   - Gestión del estado de lectura
+ *                   - Eliminación de notificaciones
  *
  * @author KNOWLES
- * @version 1.0
- * @since 2025-04-29
+ * @version 2.0
+ * @since 2025-06-10
  */
 public interface INews {
-    // Notificaciones globales (para todos los usuarios)
-    void sendGlobalNews(String message, String notificationType) throws NewsException;
-    
-    // Notificaciones específicas para un usuario
-    void sendUserNews(String message, String notificationType, String recipientId) throws NewsException;
-    
-    // Métodos de consulta
+    /**
+     * Envía una notificación global a todos los usuarios.
+     * @param message Contenido de la notificación
+     * @param tipo Tipo de notificación (usar enum TipoNews)
+     * @throws NewsException Si el mensaje está vacío o hay errores de persistencia
+     */
+    void sendGlobalNews(String message, TipoNews tipo) throws NewsException;
+
+    /**
+     * Envía una notificación específica a un usuario.
+     * @param message Contenido de la notificación
+     * @param tipo Tipo de notificación (usar enum TipoNews)
+     * @param recipientId ID del usuario destinatario
+     * @throws NewsException Si el mensaje está vacío, el ID es inválido o se intenta auto-envío
+     */
+    void sendUserNews(String message, TipoNews tipo, String recipientId) throws NewsException;
+
+    /**
+     * Envía una notificación asociada a una materia.
+     * @param message Contenido de la notificación
+     * @param materiaId ID de la materia destinataria
+     * @throws NewsException Si el mensaje está vacío o hay errores de persistencia
+     */
+    void sendNewsForMateria(String message, String materiaId) throws NewsException;
+
+    /**
+     * Obtiene una notificación por su ID único.
+     * @param id ID de la notificación
+     * @return Objeto News correspondiente
+     * @throws NewsException Si la notificación no existe
+     */
     News getNewsById(String id) throws NewsException;
-    List<News> getUnreadNewsByUser(String userId) throws NewsException;
-    List<News> getAllNewsByUser(String userId) throws NewsException;
-    List<News> getGlobalNews() throws NewsException;
-    
-    // Métodos de gestión
+
+    /**
+     * Obtiene las notificaciones no leídas de un usuario.
+     * @param userId ID del usuario
+     * @return Lista de notificaciones ordenadas por fecha (más reciente primero)
+     */
+    List<News> getUnreadNewsByUser(String userId);
+
+    /**
+     * Obtiene todas las notificaciones de un usuario (leídas y no leídas).
+     * @param userId ID del usuario
+     * @return Lista de notificaciones ordenadas por fecha (más reciente primero)
+     */
+    List<News> getAllNewsByUser(String userId);
+
+    /**
+     * Obtiene todas las notificaciones globales.
+     * @return Lista de notificaciones ordenadas por fecha (más reciente primero)
+     */
+    List<News> getGlobalNews();
+
+    /**
+     * Marca una notificación como leída.
+     * @param newsId ID de la notificación
+     * @throws NewsException Si la notificación no existe
+     */
     void markAsRead(String newsId) throws NewsException;
+
+    /**
+     * Elimina una notificación del sistema.
+     * @param newsId ID de la notificación
+     * @throws NewsException Si la notificación no existe
+     */
     void deleteNews(String newsId) throws NewsException;
-    
-    // Métodos de filtrado
-    List<News> getNewsByType(String type) throws NewsException;
-    List<News> getNewsByDateRange(LocalDateTime start, LocalDateTime end) throws NewsException;
+
+    /**
+     * Filtra notificaciones por tipo.
+     * @param type Tipo de notificación (enum TipoNews)
+     * @return Lista de notificaciones ordenadas por fecha (más reciente primero)
+     */
+    List<News> getNewsByType(TipoNews type);
+
+    /**
+     * Filtra notificaciones por rango de fechas.
+     * @param start Fecha de inicio
+     * @param end Fecha de fin
+     * @return Lista de notificaciones ordenadas por fecha (más reciente primero)
+     */
+    List<News> getNewsByDateRange(LocalDateTime start, LocalDateTime end);
+
+    /**
+     * Filtra notificaciones por materia.
+     * @param materiaId ID de la materia
+     * @return Lista de notificaciones ordenadas por fecha (más reciente primero)
+     */
+    List<News> getNewsByMateria(String materiaId);
 }
