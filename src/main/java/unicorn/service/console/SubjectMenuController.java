@@ -23,8 +23,10 @@ public class SubjectMenuController {
 
         this.account = account;
         Account accountPrototype = new Account();
+        Substitute substitutePrototype = new Substitute();
         IFile<Account> accountFileHandler = new FileHandler<>(accountPrototype);
-        this.accountController = new AccountController(accountFileHandler);
+        IFile<Substitute> substituteFileHandler = new FileHandler<>(substitutePrototype);
+        this.accountController = new AccountController(accountFileHandler, substituteFileHandler);
         try {
             this.Subjectcontroller = new SubjectController(fileHandler);
         } catch (Exception e) {

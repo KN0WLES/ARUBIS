@@ -45,6 +45,18 @@ public class AccountValidation {
         return email != null && Pattern.matches(EMAIL_REGEX, email);
     }
 
+    public static boolean validateRoleEmail(String email, TipoCuenta tipo) {
+        if (!validateEmail(email)) return false;
+
+        String domain = email.substring(email.indexOf('@'));
+        switch(tipo) {
+            case ADMIN: return domain.equals("@adm.umss.edu");
+            case PROFESOR: return domain.equals("@prf.umss.edu");
+            case ESTUDIANTE: return domain.equals("@est.umss.edu");
+            default: return false;
+        }
+    }
+
     /**
      * Valida que el número de teléfono tenga un formato válido.
      * Acepta números entre 7 y 15 dígitos de longitud.

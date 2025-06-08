@@ -57,7 +57,8 @@ public class MainMenuController {
             this.scanner = new Scanner(System.in);
             this.console = System.console();
             this.logo = new Logo();
-        } catch (AccountException | FaQException | NewsException | RoomException |  ScheduleException | SubjectException e) {
+        } catch (AccountException | FaQException | NewsException | RoomException | ScheduleException |
+                 SubjectException | SubstituteException e) {
             System.err.println("Error initializing menus: " + e.getMessage());
         }
     }
@@ -74,7 +75,8 @@ public class MainMenuController {
             this.scanner = new Scanner(System.in);
             this.console = System.console();
             this.logo = new Logo();
-        } catch (AccountException | FaQException | NewsException | RoomException |  ScheduleException | SubjectException e) {
+        } catch (AccountException | FaQException | NewsException | RoomException | ScheduleException |
+                 SubjectException | SubstituteException e) {
             System.err.println("Error initializing menus: " + e.getMessage());
         }
     }
@@ -217,59 +219,60 @@ public class MainMenuController {
             return;
         }
 
-        System.out.print("Usuario: ");
-        String username = console.readLine();
+        int intentos = 0;
+        final int MAX_INTENTOS = 3;
 
-        char[] pwdArray = console.readPassword("Contraseña: ");
-        String password = new String(pwdArray);
+        while (intentos < MAX_INTENTOS) {
+            try {
+                System.out.print("Usuario: ");
+                String username = console.readLine();
 
-        try {
-            currentAccount = accountMenu.login(username, password);
-            if (currentAccount != null) {
-                this.accountMenu = new AccountMenuController(currentAccount);
-                this.NewsMenu = new NewsMenuController(currentAccount);
-                this.SubjectMenu = new SubjectMenuController(currentAccount);
-                this.faqMenu = new FaQMenuController(currentAccount);
-                this.ScheduleMenu = new ScheduleMenuController(currentAccount);
-                this.roomMenu = new RoomMenuController(currentAccount);
+                char[] pwdArray = console.readPassword("Contraseña: ");
+                String password = new String(pwdArray);
+
+                currentAccount = accountMenu.login(username, password);
+                if (currentAccount != null) {
+                    // ... inicialización exitosa ...
+                    return;
+                }
+            } catch (AccountException e) {
+                intentos++;
+                System.out.println("\nError: " + e.getMessage());
+                System.out.println("Intento " + intentos + " de " + MAX_INTENTOS);
+
+                if (intentos >= MAX_INTENTOS) {
+                    System.out.println("Demasiados intentos fallidos. Saliendo...");
+                    System.exit(0);
+                }
+            } catch (Exception e) {
+                System.out.println("Error inesperado: " + e.getMessage());
+                return;
             }
-        } catch (AccountException | FaQException | NewsException | RoomException |  ScheduleException | SubjectException e) {
-            System.out.println("Error: " + e.getMessage());
         }
     }
 
     private void register() {
-        if (console == null) {
-            System.out.println("Error: la consola no está disponible. Ejecute desde una terminal.");
-            return;
-        }
+        boolean success = false;
+        do {
+            try {
+                Account newAccount = accountMenu.collectRegistrationData(scanner, console);
 
-        mostrarMensajeCentrado("REGISTRO DE NUEVO USUARIO");
+                // Validación adicional si es necesario
+                if (!AccountValidation.validateRoleEmail(newAccount.getEmail(), TipoCuenta.ESTUDIANTE)) {
+                    System.out.println("Error: Email debe terminar en @est.umss.edu");
+                    continue;
+                }
 
-        System.out.print("Nombre: ");
-        String nombre = scanner.nextLine();
-
-        System.out.print("Apellido: ");
-        String apellido = scanner.nextLine();
-
-        System.out.print("Teléfono: ");
-        String phone = scanner.nextLine();
-
-        System.out.print("Email: ");
-        String email = scanner.nextLine();
-
-        System.out.print("Usuario: ");
-        String user = scanner.nextLine();
-
-        char[] pwdArray = console.readPassword("Contraseña: ");
-        String password = new String(pwdArray);
-
-        try {
-            accountMenu.registerAccount(nombre, apellido, phone, email, user, password);
-            mostrarMensajeCentrado("¡Cuenta registrada exitosamente!");
-        } catch (AccountException e) {
-            System.out.println("Error registering account: " + e.getMessage());
-        }
+                accountMenu.registerAccount(newAccount);
+                success = true;
+                System.out.println("¡Registro exitoso!");
+            } catch (AccountException e) {
+                System.out.println("Error: " + e.getMessage());
+                System.out.println("Por favor intente nuevamente");
+            } catch (IllegalArgumentException e) {
+                System.out.println("Error en los datos: " + e.getMessage());
+            }
+        } while (!success);
     }
 
     private void logout() {

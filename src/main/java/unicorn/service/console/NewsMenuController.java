@@ -14,6 +14,7 @@ import java.util.Scanner;
 
 public class NewsMenuController {
     private final AccountController accountController;
+    private final IFile<Substitute> substituteFile;
     private final NewsController newsController;
     private final Account account;
     private final Scanner scanner;
@@ -23,7 +24,9 @@ public class NewsMenuController {
         this.account = account;
         Account accountPrototype = new Account();
         IFile<Account> accountFileHandler = new FileHandler<>(accountPrototype);
-        this.accountController = new AccountController(accountFileHandler);
+        Substitute substitute = new Substitute();
+        this.substituteFile = new FileHandler<>(substitute);
+        this.accountController = new AccountController(accountFileHandler, substituteFile);
 
         News newsPrototype = new News();
         IFile<News> newsFileHandler = new FileHandler<>(newsPrototype);

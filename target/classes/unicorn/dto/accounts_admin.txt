@@ -1,0 +1,4 @@
+684686ba-e7f3-4b5c-adee-66d8ab3e86e9|admin|admin|00000000|admin@adm.umss.edu|aadmin|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|ADMIN|null|null
+496f6487-c5f3-440a-9114-aa456c7e9e9a|admin|admin|00000000|admin@adm.umss.edu|admin|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|ADMIN|null|null
+efb8749b-f7a8-403c-8a9c-55c9beed5958|carmen|medina|12345690|carmen@adm.umss.edu|carmen|ad614668c69f36a036b5017e4be07d6ac483fab6fae576d24654781c492c7080|ADMIN|dd311a1e-ddef-4db8-b84a-1493a62ad4a7|carmen@prf.umss.edu
+e3e99b18-2e0b-431f-9e90-b51a1a401774|admin|admin|00000000|admin@adm.umss.edu|aadmin|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|ADMIN|null|null

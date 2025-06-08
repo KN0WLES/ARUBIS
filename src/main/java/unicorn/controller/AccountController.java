@@ -1,17 +1,17 @@
 package unicorn.controller;
 
-import unicorn.model.Account;
+import unicorn.model.*;
 import unicorn.exceptions.*;
-import unicorn.interfaces.IAccount;
-import unicorn.interfaces.IFile;
+import unicorn.interfaces.*;
+import unicorn.interfaces.*;
 import unicorn.util.*;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.Map;
-import java.util.Random;
 import java.util.HashMap;
 import java.io.File;
 
@@ -42,11 +42,13 @@ import java.io.File;
 public class AccountController implements IAccount {
     
     private final IFile<Account> fileHandler;
+    private final IFile<Substitute> substituteFile;
     private final Map<TipoCuenta, String> filePaths;
     private Map<String, Account> accounts;
 
-    public AccountController(IFile<Account> fileHandler) throws AccountException {
+    public AccountController(IFile<Account> fileHandler, IFile<Substitute> substituteFile) throws AccountException {
         this.fileHandler = fileHandler;
+        this.substituteFile = substituteFile;
         this.filePaths = new HashMap<>();
         // Define los nombres de archivo para cada tipo de cuenta 
         this.filePaths.put(TipoCuenta.ADMIN,      "src/main/java/unicorn/dto/accounts_admin.txt");
@@ -72,7 +74,7 @@ public class AccountController implements IAccount {
         }
     }
 
-    private void saveChanges() throws AccountException {
+    public  void saveChanges() throws AccountException {
         Map<TipoCuenta, List<Account>> accountsByType = accounts.values().stream() // Obtenemos la colección de cuentas
                 .collect(Collectors.groupingBy(Account::getTipoCuenta));
 
@@ -145,9 +147,9 @@ public class AccountController implements IAccount {
     public Account login(String username, String password) throws AccountException {
         Account account = getByUsername(username);
         
-        if (account == null) throw AccountException.invalidCredentials();
+        if (account == null) throw new AccountException("Usuario no encontrado");
         
-        if (!account.verifyPassword(password)) throw AccountException.invalidCredentials();
+        if (!account.verifyPassword(password)) throw new AccountException("Contraseña incorrecta");
         
         return account;
     }
@@ -228,13 +230,69 @@ public class AccountController implements IAccount {
         saveChanges();
     }
 
-    @Override
-    public void promoteToAccount(String username, TipoCuenta newType) throws AccountException {
+    public void promoteToAccount(String username, String substituteId, LocalDate startDate, LocalDate endDate) throws AccountException, SubstituteException {
         Account account = getByUsername(username);
         if (account == null) throw AccountException.userNotFound();
-        // ELIMINAR HORARIO AL PROMOVER UNA CUENTA(est, prf) A ADMIN
-        account.setTipoCuenta(newType);
+
+        if (!account.isProfesor()) {
+            throw new AccountException("Solo los profesores pueden ser promovidos a administrador");
+        }
+
+        // Crear la sustitución
+        Substitute substitution = account.promoteToAdmin(substituteId, startDate, endDate);
+
+        // Guardar cambios en la cuenta
         saveChanges();
+
+        // Guardar la sustitución
+        SubstituteController subController = new SubstituteController(substituteFile);
+        subController.createSubstitute(substitution);
+
+        // Eliminar archivo de horario si existe
+        deleteUserScheduleFile(account);
+    }
+
+    //@Override
+    public void revertToProfessor(String username) throws AccountException, SubstituteException {
+        Account account = getByUsername(username);
+        if (account == null) throw AccountException.userNotFound();
+
+        if (!account.isAdmin() || !account.hasSubstitute()) {
+            throw new AccountException("Solo administradores que fueron profesores pueden ser revertidos");
+        }
+
+        // Revertir a profesor
+        boolean reverted = account.revertToProfessor();
+        if (!reverted) {
+            throw new AccountException("No se pudo revertir la cuenta a profesor");
+        }
+
+        // Finalizar la sustitución
+        SubstituteController subController = new SubstituteController(substituteFile);
+        List<Substitute> activeSubstitutes = subController.getActiveSubstitutes();
+
+        for (Substitute s : activeSubstitutes) {
+            if (s.getOriginalTeacherId().equals(account.getId())) {
+                subController.endSubstitution(s.getId());
+                break;
+            }
+        }
+
+        // Crear archivo de horario nuevamente
+        createUserScheduleFile(account);
+        saveChanges();
+    }
+
+    private void deleteUserScheduleFile(Account account) {
+        String filePath = "src/main/java/unicorn/dto/schedules/profesor/" + account.getUser() + "_schedule.txt";
+        try {
+            File file = new File(filePath);
+            if (file.exists()) {
+                file.delete();
+            }
+        } catch (Exception e) {
+            System.err.println("Error al eliminar archivo de horario: " + e.getMessage());
+        }
     }
 
     @Override
@@ -282,8 +340,7 @@ public class AccountController implements IAccount {
 
         if (!adminExists) { //
             try {
-                Account defaultAdmin = new Account("admin", "admin", "00000000", "admin@adm.umss.edu", "admin", "Hola1234"); //
-                defaultAdmin.setTipoCuenta(TipoCuenta.ADMIN); //
+                Account defaultAdmin = new Account("admin", "admin", "00000000", "admin@adm.umss.edu", "admin", "Hola1234", TipoCuenta.ADMIN);
                 this.accounts.put(defaultAdmin.getId(), defaultAdmin); // Agregamos al HashMap
                 saveChanges(); // Guardar el nuevo admin en su archivo correspondiente
             } catch (IllegalArgumentException e) {
@@ -291,7 +348,6 @@ public class AccountController implements IAccount {
             }
         }
     }
-
 
     private void initializeDefaultPrf() throws AccountException {
         //Verifica si ya existen profesores y de ser asi no hacer nada
@@ -383,8 +439,8 @@ public class AccountController implements IAccount {
             {"Jimmy",             "",         "",  "Villarroel",       "Novillo"},
             {"Henry",        "Frank",         "",  "Villarroel",         "Tapia"},
             {"Oscar",           "A.",         "",    "Zabalaga",       "Montano"},
-            {"Jhomil",      "Efrain",         "",    "Zambrana",        "Burgos"},
-            {"Por",               "",         "",    "Designar",              ""}
+            {"Jhomil",      "Efrain",         "",    "Zambrana",        "Burgos"}
+            //{"Por",               "",         "",    "Designar",              ""}
         };
 
         for (String[] profesor : profesoresData) {
@@ -394,65 +450,68 @@ public class AccountController implements IAccount {
             String apellido1 = profesor[3];
             String apellido2 = profesor[4];
 
-            // Construir nombre completo filtrando espacios vacíos
+            // Construir nombre completo
             String nombreCompleto = Stream.of(nombre1, nombre2, nombre3)
                     .filter(s -> !s.isEmpty())
                     .collect(Collectors.joining(" "));
 
-            // Construir apellidos completos
+            // Construir apellidos
             String apellidos = Stream.of(apellido1, apellido2)
                     .filter(s -> !s.isEmpty())
                     .collect(Collectors.joining(" "));
 
-            // Generar iniciales solo con las partes no vacías
-            StringBuilder iniciales = new StringBuilder();
-            iniciales.append(nombre1.charAt(0));
+            // Generar username y email según nuevo formato
+            String username = generateProfessorUsername(nombre1, nombre2, apellido1, apellido2);
+            String email = generateProfessorEmail(nombre1, nombre2, apellido1, apellido2);
 
-            // Agregar inicial del apellido paterno
-            iniciales.append(apellido1.charAt(0));
-
-            // Agregar inicial del apellido materno si existe
-            if (!apellido2.isEmpty()) {
-                iniciales.append(apellido2.charAt(0));
-            }
-
-            String inicialesStr = iniciales.toString().toLowerCase();
-            String carnet = String.format("%07d", new Random().nextInt(10000000));
-            String email = inicialesStr + "." + carnet + "@prf.umss.edu";
-            String username = inicialesStr + carnet;
-
-            // Verificar si el profesor ya existe
-            boolean profesorExists = accounts.values().stream()
-                    .anyMatch(a -> a.getUser().equals(username));
-
-            if (!profesorExists) {
+            if (!accounts.values().stream().anyMatch(a -> a.getUser().equals(username))) {
                 try {
                     Account profesorAccount = new Account(
-                            nombreCompleto,  // Nombre completo
-                            apellidos,      // Apellidos completos
-                            "00000000",     // Teléfono por defecto
+                            nombreCompleto,
+                            apellidos,
+                            "00000000",
                             email,
                             username,
-                            "Hola1234"
+                            "Hola1234", // Cumple con 1 mayúscula, 1 minúscula, 1 número
+                            TipoCuenta.PROFESOR
                     );
-                    profesorAccount.setTipoCuenta(TipoCuenta.PROFESOR);
                     this.accounts.put(profesorAccount.getId(), profesorAccount);
-
-                    // Crear archivo de horarios para el profesor
                     createUserScheduleFile(profesorAccount);
-
                 } catch (IllegalArgumentException e) {
-                    System.err.println("Error creando cuenta profesor " + nombreCompleto + " " + apellidos + ": " + e.getMessage());
-                    continue;
+                    System.err.println("Error creando cuenta profesor: " + e.getMessage());
                 }
             }
         }
+        saveChanges();
+    }
 
-        try {
-            saveChanges();
-        } catch (AccountException e) {
-            throw new AccountException("Error guardando cuentas de profesores: " + e.getMessage());
+    private String generateProfessorUsername(String nombre1, String nombre2, String apellido1, String apellido2) {
+        StringBuilder sb = new StringBuilder();
+
+        // Primera letra del primer nombre
+        sb.append(nombre1.toLowerCase().charAt(0));
+
+        // Si tiene segundo nombre, agregar primera letra
+        if (!nombre2.isEmpty()) {
+            sb.append(nombre2.toLowerCase().charAt(0));
         }
+
+        // Apellido paterno completo en minúsculas, sin espacios ni caracteres especiales
+        String apellido = apellido1.toLowerCase()
+                .replace(" ", "")
+                .replace("á", "a")
+                .replace("é", "e")
+                .replace("í", "i")
+                .replace("ó", "o")
+                .replace("ú", "u")
+                .replace("ñ", "n");
+
+        sb.append(".").append(apellido);
+        return sb.toString();
+    }
+
+    private String generateProfessorEmail(String nombre1, String nombre2, String apellido1, String apellido2) {
+        return generateProfessorUsername(nombre1, nombre2, apellido1, apellido2) + "@prf.umss.edu";
     }
 
     @Override
