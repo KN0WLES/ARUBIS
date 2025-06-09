@@ -34,11 +34,23 @@ import java.util.List;
 public class FileHandler<T extends Base<T>> implements IFile<T> {
     
     private final T prototype;
-    
+     /**
+     * Constructor que inicializa el manejador con un prototipo del objeto.
+     * El prototipo se usa para deserializar líneas del archivo.
+     * 
+     * @param prototype Instancia de {@link T} con métodos de serialización/deserialización.
+     */
     public FileHandler(T prototype) {
         this.prototype = prototype;
     }
-
+     /**
+     * Guarda una lista de objetos en un archivo, sobrescribiendo su contenido.
+     * Cada objeto se serializa con {@link Base#toFile()} y se escribe en una línea.
+     * 
+     * @param data     Lista de objetos a guardar (no nula).
+     * @param filePath Ruta del archivo (formato: sistema operativo dependiente).
+     * @throws FileException Si falla la escritura ({@link FileException#writeError()}).
+     */
     @Override
     public void saveData(List<T> data, String filePath) throws FileException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
@@ -50,7 +62,15 @@ public class FileHandler<T extends Base<T>> implements IFile<T> {
             throw FileException.writeError();
         }
     }
-
+     /**
+     * Carga objetos desde un archivo, deserializando cada línea con {@link Base#fromFile(String)}.
+     * - Ignora líneas vacías o con espacios.
+     * - Retorna una lista vacía si el archivo no existe.
+     * 
+     * @param filePath Ruta del archivo.
+     * @return Lista de objetos cargados (puede estar vacía).
+     * @throws FileException Si falla la lectura ({@link FileException#readError()}).
+     */
     @Override
     public List<T> loadData(String filePath) throws FileException {
         List<T> data = new ArrayList<>();
@@ -68,7 +88,14 @@ public class FileHandler<T extends Base<T>> implements IFile<T> {
         
         return data;
     }
-
+     /**
+     * Añade un objeto al final del archivo sin sobrescribir.
+     * 
+     * @param data     Objeto a añadir (no nulo).
+     * @param filePath Ruta del archivo.
+     * @throws FileException Si falla la escritura ({@link FileException#writeError()}).
+     * @see #saveData(List, String) Para sobrescritura completa.
+     */
     @Override
     public void appendData(T data, String filePath) throws FileException {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, true))) {
@@ -78,12 +105,22 @@ public class FileHandler<T extends Base<T>> implements IFile<T> {
             throw FileException.writeError();
         }
     }
-
+     /**
+     * Verifica si un archivo existe en la ruta especificada.
+     * 
+     * @param filePath Ruta a verificar.
+     * @return `true` si el archivo existe, `false` en caso contrario.
+     */
     @Override
     public boolean fileExists(String filePath) {
         return Files.exists(Paths.get(filePath));
     }
-
+     /**
+     * Crea un archivo y sus directorios padres si no existen.
+     * 
+     * @param filePath Ruta del archivo a crear.
+     * @throws FileException Si falla la creación (ej: permisos insuficientes).
+     */
     @Override
     public void createFileIfNotExists(String filePath) throws FileException {
         if (!fileExists(filePath)) {

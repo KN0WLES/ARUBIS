@@ -39,7 +39,14 @@ public class FaQController implements IFaQ {
     private final IFile<FaQ> fileHandler;
     private final String filePath = "src/main/java/unicorn/arubis/dto/faqs.txt";
     private List<FaQ> faqs;
-
+     /**
+     * Constructor que inicializa el controlador y carga las FAQs desde el archivo.
+     * Si el archivo no existe o está vacío, crea dos FAQs predeterminadas.
+     * 
+     * @param fileHandler Manejador de archivos para operaciones de lectura/escritura.
+     * @throws FaQException Si ocurre un error al cargar o inicializar las FAQs.
+     * @see #saveChanges() Para el guardado inicial de FAQs predeterminadas.
+     */
     public FaQController(IFile<FaQ> fileHandler) throws FaQException{
         this.fileHandler = fileHandler;
         try {
@@ -59,7 +66,12 @@ public class FaQController implements IFaQ {
             System.err.println("Error al cargar FAQs: " + e.getMessage());
         }
     }
-
+     /**
+     * Guarda todas las FAQs actuales en el archivo especificado.
+     * 
+     * @throws FaQException Si falla la escritura del archivo.
+     * @see IFile#saveData(List, String) Para detalles de implementación del guardado.
+     */
     private void saveChanges() throws FaQException {
         try {
             fileHandler.saveData(faqs, filePath);
@@ -67,7 +79,14 @@ public class FaQController implements IFaQ {
             throw new FaQException("Error al guardar los cambios: " + e.getMessage());
         }
     }
-
+     /**
+     * Agrega una nueva FAQ al sistema, verificando que la pregunta no exista previamente.
+     * 
+     * @param faq FAQ a agregar (no nula, con pregunta/respuesta válidas).
+     * @throws FaQException Si:
+     *   - La pregunta ya existe (comparación case-insensitive).
+     *   - Fallo al guardar los cambios ({@link #saveChanges()}).
+     */
     @Override
     public void addFaq(FaQ faq) throws FaQException {
         if (faqs.stream().anyMatch(f -> f.getPregunta().equalsIgnoreCase(faq.getPregunta()))) {
@@ -77,7 +96,13 @@ public class FaQController implements IFaQ {
         faqs.add(faq);
         saveChanges();
     }
-
+     /**
+     * Busca una FAQ por su ID único.
+     * 
+     * @param id Identificador de la FAQ (UUID o similar).
+     * @return La FAQ encontrada.
+     * @throws FaQException Si no se encuentra la FAQ ({@link FaQException#notFound()}).
+     */
     @Override
     public FaQ getFaqById(String id) throws FaQException {
         return faqs.stream()
@@ -85,7 +110,14 @@ public class FaQController implements IFaQ {
                 .findFirst()
                 .orElseThrow(FaQException::notFound);
     }
-
+     /**
+     * Actualiza una FAQ existente (pregunta, respuesta y estado "pendiente").
+     * 
+     * @param faq FAQ con los nuevos datos (debe incluir ID válido).
+     * @throws FaQException Si:
+     *   - La FAQ no existe ({@link #getFaqById(String)}).
+     *   - Fallo al guardar los cambios ({@link #saveChanges()}).
+     */
     @Override
     public void updateFaq(FaQ faq) throws FaQException {
         FaQ existingFaq = getFaqById(faq.getId());
@@ -96,17 +128,34 @@ public class FaQController implements IFaQ {
         
         saveChanges();
     }
-
+     /**
+     * Verifica si hay FAQs marcadas como pendientes.
+     * 
+     * @return `true` si existe al menos una FAQ pendiente, `false` en caso contrario.
+     * @throws FaQException Si hay errores al acceder a la lista de FAQs.
+     */
     public boolean areFaqByPending() throws FaQException {
         return faqs.stream().anyMatch(FaQ::isPendiente);
     }
-
+     /**
+     * Obtiene todas las FAQs marcadas como pendientes.
+     * 
+     * @return Lista de FAQs pendientes (puede estar vacía).
+     * @throws FaQException Si hay errores al filtrar las FAQs.
+     */
     public List<FaQ> getFaqByPending() throws FaQException {
         return faqs.stream()
                 .filter(FaQ::isPendiente)
                 .toList();
     }
-
+     /**
+     * Elimina una FAQ del sistema por su ID.
+     * 
+     * @param id Identificador de la FAQ a eliminar.
+     * @throws FaQException Si:
+     *   - La FAQ no existe ({@link #getFaqById(String)}).
+     *   - Fallo al eliminar o guardar los cambios.
+     */
     @Override
     public void deleteFaq(String id) throws FaQException {
         FaQ existingFaq = getFaqById(id);
@@ -115,7 +164,12 @@ public class FaQController implements IFaQ {
 
         saveChanges();
     }
-
+     /**
+     * Retorna una copia de todas las FAQs registradas.
+     * 
+     * @return Lista inmutable de FAQs.
+     * @throws FaQException Si hay errores al acceder a los datos.
+     */
     @Override
     public List<FaQ> getAllFaqs() throws FaQException {
         return new ArrayList<>(faqs);

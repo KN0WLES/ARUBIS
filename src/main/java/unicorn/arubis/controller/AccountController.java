@@ -46,7 +46,14 @@ public class AccountController implements IAccount {
     //private List<Account> accounts;
     private final Map<TipoCuenta, String> filePaths;
     private Map<String, Account> accounts;
-
+     /**
+     * Controlador principal para la gestión de cuentas de usuario.
+     * @param fileHandler Manejador de archivos para operaciones de I/O
+     * @throws AccountException Si falla la inicialización de cuentas por defecto
+     * 
+     * @see IFile Interfaz para manejo de archivos
+     * @see Account Modelo de datos de cuenta
+     */
     public AccountController(IFile<Account> fileHandler) throws AccountException {
         this.fileHandler = fileHandler;
         this.filePaths = new HashMap<>();
@@ -73,7 +80,13 @@ public class AccountController implements IAccount {
             System.err.println("Error al cargar cuentas, iniciando con lista vacía: " + e.getMessage());
         }
     }
-
+     /**
+     * Guarda los cambios de todas las cuentas en sus archivos correspondientes,
+     * agrupándolas por tipo (PROFESOR, ESTUDIANTE, ADMIN).
+     * 
+     * @throws AccountException Si ocurre un error al escribir en los archivos.
+     * @see FileHandler#saveData(List, String)  Para detalles del formato de guardado.
+     */
     private void saveChanges() throws AccountException {
         Map<TipoCuenta, List<Account>> accountsByType = accounts.values().stream() // Obtenemos la colección de cuentas
                 .collect(Collectors.groupingBy(Account::getTipoCuenta));
@@ -89,7 +102,15 @@ public class AccountController implements IAccount {
             }
         }
     }
-
+     /**
+     * Registra una nueva cuenta verificando duplicados de usuario/email.
+     * 
+     * @param account La cuenta a registrar (no nula, con campos válidos).
+     * @throws AccountException Si:
+     *   - El usuario o email ya existen (@link AccountException#duplicateUser()).
+     *   - Hay errores al guardar los cambios (@link #saveChanges()).
+     *   - Fallo al crear el archivo de horario (@link #createUserScheduleFile(Account)).
+     */
     @Override
     public void registerAccount(Account account) throws AccountException {
         // Verificamos si el nombre de usuario o el email ya existen
@@ -107,7 +128,15 @@ public class AccountController implements IAccount {
         // Crear archivo de horarios para el usuario
         createUserScheduleFile(account); //
     }
-
+     /**
+     * Crea un archivo de horario vacío para una cuenta en la ruta:
+     * `src/main/java/unicorn/arubis/dto/schedules/[tipo_cuenta]/[usuario]_schedule.txt`.
+     * 
+     * @param account La cuenta asociada al horario (no nula).
+     * @throws AccountException Si:
+     *   - El tipo de cuenta no es válido (no es PROFESOR/ESTUDIANTE).
+     *   - Fallo al crear el archivo o directorio.
+     */
     private void createUserScheduleFile(Account account) throws AccountException {
         String baseDir = "src/main/java/unicorn/arubis/dto/schedules/";
         String subDir;
@@ -142,7 +171,14 @@ public class AccountController implements IAccount {
             throw new AccountException("Error al crear archivo de horarios para el usuario: " + e.getMessage());
         }
     }
-
+     /**
+     * Autentica un usuario mediante credenciales.
+     * 
+     * @param username Nombre de usuario (formato: [a-z0-9]+).
+     * @param password Contraseña (mínimo 8 caracteres).
+     * @return La cuenta autenticada.
+     * @throws AccountException Si las credenciales son inválidas (@link AccountException#invalidCredentials()).
+     */
     @Override
     public Account login(String username, String password) throws AccountException {
         Account account = getByUsername(username);
@@ -153,7 +189,16 @@ public class AccountController implements IAccount {
         
         return account;
     }
-
+     /**
+     * Actualiza el nombre de un usuario.
+     * 
+     * @param username Usuario objetivo (debe existir).
+     * @param newName  Nuevo nombre (no vacío, sin caracteres especiales).
+     * @throws AccountException Si:
+     *   - El usuario no existe (@link AccountException#userNotFound()).
+     *   - El nombre es inválido.
+     * @see #saveChanges() Para el guardado persistente.
+     */
     @Override
     public void updateName(String username, String newName) throws AccountException {
         Account account = getByUsername(username);
@@ -163,7 +208,16 @@ public class AccountController implements IAccount {
         account.setNombre(newName);
         saveChanges();
     }
-
+     /**
+     * Actualiza el apellido de un usuario existente.
+     * 
+     * @param username Nombre de usuario (no nulo, no vacío, sin espacios innecesarios).
+     * @param newLast  Nuevo apellido (no nulo, no vacío, máximo 50 caracteres).
+     * @throws AccountException Si:
+     *   - El usuario no existe ({@link AccountException#userNotFound()}).
+     *   - El nombre de usuario o apellido son inválidos (nulos/vacíos).
+     * @see #saveChanges() Para la persistencia de la modificación.
+     */
     @Override
     public void updateLast(String username, String newLast) throws AccountException {
         if (username == null || username.trim().isEmpty()) {
@@ -180,7 +234,14 @@ public class AccountController implements IAccount {
         account.setApellido(newLast.trim());
         saveChanges();
     }
-
+     /**
+     * Actualiza el número de teléfono de un usuario.
+     * 
+     * @param username Nombre de usuario (debe existir).
+     * @param newPhone Nuevo teléfono (formato: 8 dígitos numéricos, sin espacios).
+     * @throws AccountException Si el usuario no existe ({@link AccountException#userNotFound()}).
+     * @see Account#setPhone(String) Para validación interna del formato.
+     */
     @Override
     public void updatePhone(String username, String newPhone) throws AccountException {
         Account account = getByUsername(username);
@@ -190,7 +251,16 @@ public class AccountController implements IAccount {
         account.setPhone(newPhone);
         saveChanges();
     }
-
+     /**
+     * Actualiza el email de un usuario, verificando que no esté registrado por otro.
+     * 
+     * @param username Nombre de usuario (debe existir).
+     * @param newEmail Nuevo email (formato: válido según RFC 5322, único en el sistema).
+     * @throws AccountException Si:
+     *   - El usuario no existe ({@link AccountException#userNotFound()}).
+     *   - El email ya está en uso por otra cuenta.
+     * @see #getByUsername(String) Para la búsqueda del usuario.
+     */
     @Override
     public void updateEmail(String username, String newEmail) throws AccountException {
         Account account = getByUsername(username);
@@ -206,7 +276,18 @@ public class AccountController implements IAccount {
         account.setEmail(newEmail);
         saveChanges();
     }
-
+     /**
+     * Cambia la contraseña de un usuario tras validar la contraseña actual.
+     * 
+     * @param username       Nombre de usuario (debe existir).
+     * @param currentPassword Contraseña actual (mínimo 8 caracteres).
+     * @param newPassword    Nueva contraseña (mínimo 8 caracteres, distinta a la actual).
+     * @throws AccountException Si:
+     *   - El usuario no existe ({@link AccountException#userNotFound()}).
+     *   - La contraseña actual es incorrecta.
+     *   - La nueva contraseña no cumple los requisitos.
+     * @see Account#verifyPassword(String) Para la validación de contraseñas.
+     */
     @Override
     public void updatePassword(String username, String currentPassword, String newPassword) throws AccountException {
         Account account = getByUsername(username);
@@ -220,7 +301,15 @@ public class AccountController implements IAccount {
         account.setPassword(newPassword);
         saveChanges();
     }
-
+     /**
+     * Restablece la contraseña de un usuario sin validar la contraseña actual.
+     * (Uso típico: recuperación de contraseña por administrador).
+     * 
+     * @param username    Nombre de usuario (debe existir).
+     * @param newPassword Nueva contraseña (mínimo 8 caracteres).
+     * @throws AccountException Si el usuario no existe ({@link AccountException#userNotFound()}).
+     * @see #updatePassword(String, String, String) Para el cambio con validación.
+     */
     public void resetUserPassword(String username, String newPassword) throws AccountException {
         Account account = getByUsername(username);
 
@@ -229,7 +318,14 @@ public class AccountController implements IAccount {
         account.setPassword(newPassword);
         saveChanges();
     }
-
+     /**
+     * Cambia el tipo de cuenta de un usuario (ej: de ESTUDIANTE a PROFESOR).
+     * 
+     * @param username Nombre de usuario (debe existir).
+     * @param newType  Nuevo tipo de cuenta ({@link TipoCuenta}, no nulo).
+     * @throws AccountException Si el usuario no existe ({@link AccountException#userNotFound()}).
+     * @see TipoCuenta Para los valores posibles.
+     */
     @Override
     public void promoteToAccount(String username, TipoCuenta newType) throws AccountException {
         Account account = getByUsername(username);
@@ -238,7 +334,14 @@ public class AccountController implements IAccount {
         account.setTipoCuenta(newType);
         saveChanges();
     }
-
+     /**
+     * Busca una cuenta por su nombre de usuario.
+     * 
+     * @param username Nombre de usuario (case-sensitive).
+     * @return La cuenta encontrada o `null` si no existe.
+     * @throws AccountException Si hay errores en la búsqueda (ej: datos corruptos).
+     * @see #getByEmail(String) Para búsqueda por email.
+     */
     @Override
     public Account getByUsername(String username) throws AccountException {
         return accounts.values().stream()
@@ -246,7 +349,14 @@ public class AccountController implements IAccount {
                 .findFirst()
                 .orElse(null);
     }
-
+     /**
+     * Busca una cuenta por su dirección de email.
+     * 
+     * @param email Email institucional (case-insensitive, formato válido).
+     * @return La cuenta encontrada o `null` si no existe.
+     * @throws AccountException Si hay errores en la búsqueda.
+     * @see #getById(String) Para búsqueda por ID.
+     */
     @Override
     public Account getByEmail(String email) throws AccountException {
         return accounts.values().stream()
@@ -254,7 +364,14 @@ public class AccountController implements IAccount {
                 .findFirst()
                 .orElse(null);
     }
-
+     /**
+     * Busca una cuenta por su ID único.
+     * 
+     * @param id Identificador único de la cuenta (UUID o similar).
+     * @return La cuenta encontrada o `null` si no existe.
+     * @throws AccountException Si hay errores en la búsqueda.
+     * @see #getAllAccounts() Para obtener todas las cuentas.
+     */
     @Override
     public Account getById(String id) throws AccountException {
         return accounts.values().stream()
@@ -262,7 +379,14 @@ public class AccountController implements IAccount {
                 .findFirst()
                 .orElse(null);
     }
-    
+     /**
+     * Elimina una cuenta, con validación para administradores.
+     * 
+     * @param username Usuario a eliminar (debe existir).
+     * @throws AccountException Si:
+     *   - El usuario no existe (@link AccountException#userNotFound()).
+     *   - Es el último administrador (@link AccountException#adminRestriction()).
+     */
     @Override
     public void deleteAccount(String username) throws AccountException {
         Account account = getByUsername(username);
@@ -277,7 +401,12 @@ public class AccountController implements IAccount {
         accounts.remove(account.getId());
         saveChanges();
     }
-
+     /**
+     * Inicializa un administrador por defecto si no existe ninguno.
+     * Credenciales predeterminadas: usuario="admin", contraseña="Hola1234".
+     * 
+     * @throws AccountException Si falla la creación o guardado.
+     */
     private void initializeDefaultAdmin() throws AccountException {
         // Verificar si ya existe un administrador por defecto en la lista total de cuentas
         boolean adminExists = accounts.values().stream().anyMatch(a -> a.getUser().equals("admin") && a.getTipoCuenta() == TipoCuenta.ADMIN); //
@@ -294,7 +423,15 @@ public class AccountController implements IAccount {
         }
     }
 
-
+     /**
+     * Crea cuentas de profesores predeterminadas si no existen.
+     * Genera automáticamente:
+     * - Usuario: Iniciales + carnet (ej: "ab1234567").
+     * - Email: [iniciales].[carnet]@prf.umss.edu.
+     * - Contraseña: "Hola1234".
+     * 
+     * @throws AccountException Si falla el guardado masivo (@link #saveChanges()).
+     */
     private void initializeDefaultPrf() throws AccountException {
         //Verifica si ya existen profesores y de ser asi no hacer nada
         boolean profExist = accounts.values().stream()
@@ -456,7 +593,12 @@ public class AccountController implements IAccount {
             throw new AccountException("Error guardando cuentas de profesores: " + e.getMessage());
         }
     }
-
+     /**
+     * Retorna todas las cuentas registradas.
+     * 
+     * @return Lista inmutable de cuentas.
+     * @throws AccountException Si hay errores de acceso a datos.
+     */
     @Override
     public List<Account> getAllAccounts() throws AccountException {
         return new ArrayList<>(accounts.values());
