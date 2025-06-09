@@ -1,8 +1,11 @@
 package unicorn.interfaces;
 
+import unicorn.exceptions.SubstituteException;
 import unicorn.model.Account;
 import unicorn.util.TipoCuenta;
 import unicorn.exceptions.AccountException;
+
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -132,7 +135,7 @@ public interface IAccount {
      * @param isAdmin Estado de administrador (true para activar, false para desactivar).
      * @throws AccountException Si la cuenta no existe o los datos son inválidos.
      */
-    void promoteToAccount(String username, TipoCuenta newType) throws AccountException;
+    void promoteToAccount(String username, String substituteId, LocalDate startDate, LocalDate endDate) throws AccountException, SubstituteException;
     
     /**
      * Busca una cuenta por nombre de usuario.
