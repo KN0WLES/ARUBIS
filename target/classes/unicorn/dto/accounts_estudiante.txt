@@ -1,3 +1,0 @@
-8665d86c-aaca-4514-8c3a-f4ab6612f479|diego|lopez|12345678|diego@est.umss.edu|dlopez|290122f0ac3a01a8eae3793735732158588b51ffb03f302ac8201828e0791054|ESTUDIANTE|null|null
-69eeeb43-5f8c-4e9a-9643-6b91401266f6|MARIA2|salas|1234568|maria@est.umss.edu|maria|99672fdb9d2856bffae2924a7da3bccfa4396fc88b7df7fe4ec44a23a4d3090a|ESTUDIANTE|null|null
-b34826ab-ed9c-4308-863e-4948f2a051a1|carla|perez|12345678|carla@est.umss.edu|carla|68d820783c3a293e38db60f3cc67b5454642d8327e7292e2de133c6fb61115e1|ESTUDIANTE|null|null
