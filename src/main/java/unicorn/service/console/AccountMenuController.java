@@ -667,28 +667,89 @@ public class AccountMenuController {
         }
         Account profesor = profesores.get(profIndex);
 
-        // Mostrar lista de posibles sustitutos (otros profesores)
-        List<Account> posiblesSustitutos = profesores.stream()
-                .filter(p -> !p.getId().equals(profesor.getId()))
-                .toList();
+        // Opciones para seleccionar sustituto
+        mostrarMensajeCentrado("==== SELECCIONAR SUSTITUTO ====");
+        System.out.println("1. Seleccionar profesor existente");
+        System.out.println("2. Crear nuevo profesor como sustituto");
+        System.out.println("0. Cancelar");
 
-        if (posiblesSustitutos.isEmpty()) {
-            System.out.println("No hay otros profesores disponibles como sustitutos.");
-            return;
+        int opcionSustituto = readIntOption("Seleccione una opción: ");
+        Account sustituto = null;
+
+        switch (opcionSustituto) {
+            case 1 -> {
+                // Seleccionar profesor existente
+                List<Account> posiblesSustitutos = profesores.stream()
+                        .filter(p -> !p.getId().equals(profesor.getId()))
+                        .toList();
+
+                if (posiblesSustitutos.isEmpty()) {
+                    System.out.println("No hay otros profesores disponibles como sustitutos.");
+                    return;
+                }
+
+                System.out.println("\nSustitutos disponibles:");
+                for (int i = 0; i < posiblesSustitutos.size(); i++) {
+                    Account sub = posiblesSustitutos.get(i);
+                    System.out.printf("%d. %s (%s)%n", i + 1, sub.getFullName(), sub.getUser());
+                }
+
+                int subIndex = readIntOption("\nSeleccione el sustituto (0 para cancelar): ") - 1;
+                if (subIndex < 0 || subIndex >= posiblesSustitutos.size()) {
+                    System.out.println("Operación cancelada.");
+                    return;
+                }
+                sustituto = posiblesSustitutos.get(subIndex);
+            }
+            case 2 -> {
+                // Crear nuevo profesor como sustituto
+                mostrarMensajeCentrado("==== CREAR NUEVO PROFESOR ====");
+
+                System.out.print("Nombre: ");
+                String nombre = scanner.nextLine();
+
+                System.out.print("Apellido: ");
+                String apellido = scanner.nextLine();
+
+                System.out.print("Teléfono: ");
+                String phone = scanner.nextLine();
+
+                System.out.print("Email (debe terminar en @prf.umss.edu): ");
+                String email = scanner.nextLine();
+
+                if (!email.endsWith("@prf.umss.edu")) {
+                    System.out.println("Error: Email debe terminar en @prf.umss.edu");
+                    return;
+                }
+
+                System.out.print("Usuario: ");
+                String username = scanner.nextLine();
+
+                String password;
+                if (console != null) {
+                    password = new String(console.readPassword("Contraseña: "));
+                } else {
+                    System.out.print("Contraseña: ");
+                    password = scanner.nextLine();
+                }
+
+                // Crear la nueva cuenta de profesor
+                sustituto = new Account(nombre, apellido, phone, email, username, password, TipoCuenta.PROFESOR);
+                accountController.registerAccount(sustituto);
+                System.out.println("Nuevo profesor creado y seleccionado como sustituto.");
+            }
+            case 0 -> {
+                System.out.println("Operación cancelada.");
+                return;
+            }
+            default -> {
+                System.out.println("Opción inválida.");
+                return;
+            }
         }
 
-        System.out.println("\nSustitutos disponibles:");
-        for (int i = 0; i < posiblesSustitutos.size(); i++) {
-            Account sub = posiblesSustitutos.get(i);
-            System.out.printf("%d. %s (%s)%n", i + 1, sub.getFullName(), sub.getUser());
-        }
 
-        int subIndex = readIntOption("\nSeleccione el sustituto (0 para cancelar): ") - 1;
-        if (subIndex < 0 || subIndex >= posiblesSustitutos.size()) {
-            System.out.println("Operación cancelada.");
-            return;
-        }
-        Account sustituto = posiblesSustitutos.get(subIndex);
+
 
         // Fechas de sustitución
         System.out.print("\nFecha de inicio (AAAA-MM-DD): ");

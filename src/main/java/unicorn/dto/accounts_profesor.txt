@@ -4,6 +4,7 @@
 6be75e93-e3e9-4d1b-8266-08b32e4d39c4|Osvaldo Walter|Gutierrez Andrade|00000000|ow.gutierrez@prf.umss.edu|ogutierrez andrade|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|PROFESOR|null|null
 f9ee3742-de1e-46ae-9749-e8a70875ee56|Magda Lena|Peeters Ilonaa|00000000|ml.peeters@prf.umss.edu|mpeeters ilonaa|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|PROFESOR|null|null
 f7d3c7b8-bcb4-454e-b5b2-a1248aa760e1|Ramiro|Rojas Zurita|00000000|r.rojas@prf.umss.edu|rrojas zurita|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|PROFESOR|null|null
+a9630cf4-64de-49b6-998a-4f76bc4b9c36|santiago|mendez|12345678|santiago@prf.umss.edu|santiago|68d820783c3a293e38db60f3cc67b5454642d8327e7292e2de133c6fb61115e1|PROFESOR|null|null
 8337399b-8935-4ddb-b691-859ba0989e1d|Felix|Ugarte Cejas|00000000|f.ugarte@prf.umss.edu|fugarte cejas|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|PROFESOR|null|null
 ef95f879-34ef-4bcc-a44e-9fc05ebc48a1|Ronald Edgar|Patino Tito|00000000|re.patino@prf.umss.edu|rpatino tito|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|PROFESOR|null|null
 c11c78b1-ee9b-4a5a-ac4f-a353fce62b96|Indira|Camacho Del Castillo|00000000|i.camacho@prf.umss.edu|icamacho del castillo|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|PROFESOR|null|null
@@ -56,6 +57,7 @@ f08ab557-2ce8-482d-a5f2-8965a7f090ca|Fidel|Taborga Acha|00000000|f.taborga@prf.u
 5232c771-66e8-4891-a876-806707491965|Darlong Howard|Taylor Terrazas|00000000|dh.taylor@prf.umss.edu|dtaylor terrazas|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|PROFESOR|null|null
 bf4f093d-8190-4c05-8e42-a32577559502|Vladimir Abel|Costas Jauregui|00000000|va.costas@prf.umss.edu|vcostas jauregui|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|PROFESOR|null|null
 e61b0bfa-efe7-4de1-92da-c35d9753e172|Jose Roberto|Omonte Ojalvo|00000000|jr.omonte@prf.umss.edu|jomonte ojalvo|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|PROFESOR|null|null
+2e6ab232-6b73-45c1-b336-52833ad9d78c|pedro|fernandez|12345678|pedro@prf.umss.edu|pedro|68d820783c3a293e38db60f3cc67b5454642d8327e7292e2de133c6fb61115e1|PROFESOR|null|null
 06bf0b07-dca5-4ae6-896c-ce5974dc189a|Raul|Catari Rios|00000000|r.catari@prf.umss.edu|rcatari rios|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|PROFESOR|null|null
 0be205ef-394c-4563-a21a-8d3d62671067|Alex Danchgelo|Choque Flores|00000000|ad.choque@prf.umss.edu|achoque flores|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|PROFESOR|null|null
 5c041937-e41f-40ee-b012-92410e883880|MARCELO|salas|12345678|Msalas@prf.umss.edu|marcelo|49358e1e30111fbec806fa10b187fd1f5c9ca617d593b9feb1a8adedf03c9fef|PROFESOR|null|null
@@ -63,6 +65,7 @@ b12489ad-f652-465a-b1d6-c974b5af6089|Carlos Javier Alfredo|Cosio Papadopolis|000
 604c90c6-53d1-45b1-b975-c002d864f554|Cecilia Beatriz|Castro Lazarte|00000000|cb.castro@prf.umss.edu|ccastro lazarte|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|PROFESOR|null|null
 a85e1a8b-4ccb-466f-a562-44c528ec138f|Freddy|Flores Flores|00000000|f.flores@prf.umss.edu|fflores flores|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|PROFESOR|null|null
 9fb6b3c3-dcf9-48e3-bcd9-24d6481d4714|Juan Antonio|Rodriguez Sejas|00000000|ja.rodriguez@prf.umss.edu|jrodriguez sejas|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|PROFESOR|null|null
+d23b3b49-02a9-489b-9518-54688adc2c49|rosa|flores|12345678|rosa@prf.umss.edu|rosa|68d820783c3a293e38db60f3cc67b5454642d8327e7292e2de133c6fb61115e1|PROFESOR|null|null
 aadf501d-9344-4e94-bd02-0cef8c1aa2ea|Hernan|Flores Garcia|00000000|h.flores@prf.umss.edu|hflores garcia|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|PROFESOR|null|null
 2e3dce34-b1b7-49ae-b092-631420a57295|Emir Felix|Vargas Peredo|00000000|ef.vargas@prf.umss.edu|evargas peredo|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|PROFESOR|null|null
 c08e0c43-6795-4f87-bd63-f6b705cfd733|Juan Marcelo|Flores Soliz|00000000|jm.flores@prf.umss.edu|jflores soliz|a184712a824240be01cac45109027e926f730825c7a3ddd277cce1c532179462|PROFESOR|null|null
