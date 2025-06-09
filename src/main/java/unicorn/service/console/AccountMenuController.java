@@ -134,7 +134,7 @@ public class AccountMenuController {
                     case 0 -> { }
                     default -> System.out.println("Opción inválida.");
                 }
-            } catch (Exception e) {
+            } catch (Exception e) { 
                 System.out.println("Error: " + e.getMessage());
             }
         } while (option != 0);
