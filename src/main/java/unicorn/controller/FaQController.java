@@ -47,11 +47,7 @@ public class FaQController implements IFaQ {
             this.faqs = this.fileHandler.loadData(filePath);
 
             if (this.faqs == null || this.faqs.isEmpty()) {
-                FaQ default1FaQ = new FaQ("Donde se encuentran ubicados","Calle Almagro 11, Madrid - CIF B65739856");
-                FaQ default2FaQ = new FaQ("Contactos","Teléfono: 4258813 Whatsapp: 65486014 Correo: info@unicorn.com.bo");
                 this.faqs = new ArrayList<>();
-                this.faqs.add(default1FaQ);
-                this.faqs.add(default2FaQ);
                 saveChanges();
             }
         } catch (FileException e) {
@@ -86,12 +82,11 @@ public class FaQController implements IFaQ {
                 .orElseThrow(FaQException::notFound);
     }
 
-    @Override
-    public void updateFaq(FaQ faq) throws FaQException {
+    public void updateFaq(FaQ faq,String userResponse) throws FaQException {
         FaQ existingFaq = getFaqById(faq.getId());
         
         existingFaq.setPregunta(faq.getPregunta());
-        existingFaq.setRespuesta(faq.getRespuesta());
+        existingFaq.setRespuesta(faq.getRespuesta(),userResponse);
         existingFaq.setPendiente(false);
         
         saveChanges();
@@ -116,6 +111,17 @@ public class FaQController implements IFaQ {
         saveChanges();
     }
 
+    public void createDefaultContactFAQ(){
+        FaQ default1FaQ = new FaQ("Donde se encuentran ubicados","Calle Almagro 11, Madrid - CIF B65739856","default");
+        FaQ default2FaQ = new FaQ("Contactos","Teléfono: 4258813 Whatsapp: 65486014 Correo: info@unicorn.com.bo","default");
+        FaQ contactFAQ = new FaQ(
+                "¿Cómo contacto a un administrador para activar mi cuenta?",
+                "Envía un email a activaciones@adm.umss.edu con tu número de matrícula.","default"
+        );
+        this.faqs.add(default1FaQ);
+        this.faqs.add(default2FaQ);
+        this.faqs.add(contactFAQ);
+    }
     @Override
     public List<FaQ> getAllFaqs() throws FaQException {
         return new ArrayList<>(faqs);

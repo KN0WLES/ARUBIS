@@ -4,69 +4,193 @@ import unicorn.controller.*;
 import unicorn.exceptions.*;
 import unicorn.interfaces.*;
 import unicorn.model.*;
+import unicorn.util.TipoCuenta;
 
-import unicorn.util.*;
-import java.util.List;
-import java.util.Scanner;
-import java.io.Console;
-import java.util.stream.Collectors;
-import java.util.logging.Logger;
-import java.util.logging.Level;
 import java.time.LocalDate;
-/**
- * Clase que representa el controlador de menú para gestión de cuentas.
- * Gestiona la interacción del usuario con el sistema de cuentas, permitiendo
- * registrar, actualizar, eliminar y consultar cuentas de usuario.
- * {@code @description} Funcionalidades principales:
- *                   - Registrar nuevas cuentas de usuario.
- *                   - Iniciar sesión con credenciales.
- *                   - Actualizar información de cuentas existentes.
- *                   - Eliminar cuentas de usuario.
- *                   - Gestionar privilegios de administrador.
- *                   - Consultar información de cuentas.
- *                   - Validar entradas y manejar excepciones.
- * 
- * @author KNOWLES
- * @version 1.0
- * @since 2025-05-28
- * @see AccountController
- * @see Account
- * @see IAccount
- */
-public class AccountMenuController {
+import java.util.*;
+import java.io.Console;
+
+public class AccountMenuController extends BaseMenuController {
     private final AccountController accountController;
-    private final IFile<Substitute> substituteFile;
-    private Account account;
-    private final Scanner scanner;
+    private final Account account;
     private final Console console;
 
-    public AccountMenuController(Account account) throws AccountException, SubstituteException {
-        Account prototype = new Account();
-        try {
-            Substitute substitute = new Substitute();
-            this.substituteFile = new FileHandler<>(substitute);  // Mover a campo de clase
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-        }
-        IFile<Account> fileHandler = new FileHandler<>(prototype);
-        this.accountController = new AccountController(fileHandler, substituteFile);
-        this.scanner = new Scanner(System.in);
-        this.console = System.console();
+    public AccountMenuController(AccountController accountController, Account account) {
+        this.accountController = accountController;
         this.account = account;
+        this.console = System.console();
+    }
+
+    @Override
+    public void showMenu() {
+        switch (account.getTipoCuenta()) {
+            case ADMIN -> showAdminMenu();
+            case PROFESOR -> showTeacherMenu();
+            case ESTUDIANTE -> showStudentMenu();
+            default -> System.out.println("Rol no reconocido");
+        }
+    }
+
+    // ==================== MENÚ PARA TODOS ====================
+    public void showCommonMenu() {
+        int option;
+        do {
+            mostrarMensajeCentrado("==== MENÚ DE CUENTA ====");
+            displayAccountDetails(account);
+            System.out.println("1. Actualizar información de cuenta");
+            System.out.println("2. Cambiar contraseña");
+            System.out.println("0. Volver al menú principal");
+
+            option = readIntOption("Seleccione una opción: ");
+
+            try {
+                switch (option) {
+                    case 1 -> updateAccountMenu(account);
+                    case 2 -> changePasswordMenu(account);
+                    case 0 -> {}
+                    default -> System.out.println("Opción inválida.");
+                }
+            } catch (Exception e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        } while (option != 0);
+    }
+
+    // ==================== MENÚ ADMIN ====================
+    private void showAdminMenu() {
+        while (true) {
+            System.out.println("\n=== GESTIÓN DE CUENTAS (ADMIN) ===");
+            System.out.println("1. Ver todas las cuentas (paginado)");
+            System.out.println("2. Buscar cuentas (avanzado)");
+            System.out.println("3. Filtrar cuentas por rol");
+            System.out.println("4. Modificar estado de administrador");
+            System.out.println("5. Eliminar cuenta");
+            System.out.println("6. Resetear contraseña");
+            System.out.println("7. Ver estadísticas");
+            System.out.println("8. Crear cuenta docente/administrador");
+            System.out.println("9. Gestión de sustituciones");
+            System.out.println("0. Volver al menú principal");
+            switch (readIntOption("Selección: ")) {
+                case 1 -> verTodasCuentasPaginado();
+                case 2 -> buscarCuentasAvanzado();
+                case 3 -> filtrarPorRol();
+                case 4 -> modificarEstadoAdmin();
+                case 5 -> eliminarCuenta();
+                case 6 -> resetearContrasena();
+                case 7 -> verEstadisticas();
+                case 8 -> crearCuentaDocenteAdmin();
+                case 9 -> gestionSustituciones();
+                case 0 -> { return; }
+                default -> System.out.println("Opción inválida.");
+            }
+        }
+    }
+
+    // ==================== MENÚ PROFESOR ====================
+    private void showTeacherMenu() {
+        showCommonMenu();
+        // Puedes agregar funciones específicas para profesores aquí si lo requieres
+    }
+
+    // ==================== MENÚ ESTUDIANTE ====================
+    private void showStudentMenu() {
+        showCommonMenu();
+        // Puedes agregar funciones específicas para estudiantes aquí si lo requieres
+    }
+
+    // ==================== FUNCIONES COMUNES ====================
+    
+    private void displayAccountDetails(Account account) {
+        mostrarMensajeCentrado(" Detalles de la cuenta ");
+        System.out.println("Usuario: " + account.getUser());
+        System.out.println("Nombre: " + account.getNombre());
+        System.out.println("Apellido: " + account.getApellido());
+        System.out.println("Email: " + account.getEmail());
+        System.out.println("Teléfono: " + account.getPhone());
+        System.out.println("Tipo: " +
+                (account.getTipoCuenta() != null ? account.getTipoCuenta().getDescripcion() : "No definido"));
+        System.out.println(account.getStatus() != null ? "Estado: " + account.getStatus().getDescripcion() : "Estado: No definido");        
+    }
+
+    private void updateAccountMenu(Account account) {
+        mostrarMensajeCentrado("==== ACTUALIZAR INFORMACIÓN DE CUENTA ====");
+        System.out.println("1. Actualizar nombre");
+        System.out.println("2. Actualizar apellido");
+        System.out.println("3. Actualizar teléfono");
+        System.out.println("4. Actualizar correo electrónico");
+        System.out.println("0. Volver");
+
+        int option = readIntOption("Seleccione una opción: ");
+
+        try {
+            switch (option) {
+                case 1 -> {
+                    System.out.print("Nuevo nombre: ");
+                    String newName = scanner.nextLine();
+                    accountController.updateName(account.getUser(), newName);
+                    System.out.println("Nombre actualizado exitosamente.");
+                }
+                case 2 -> {
+                    System.out.print("Nuevo apellido: ");
+                    String newLast = scanner.nextLine();
+                    accountController.updateLast(account.getUser(), newLast);
+                    System.out.println("Apellido actualizado exitosamente.");
+                }
+                case 3 -> {
+                    System.out.print("Nuevo teléfono: ");
+                    String newPhone = scanner.nextLine();
+                    accountController.updatePhone(account.getUser(), newPhone);
+                    System.out.println("Teléfono actualizado exitosamente.");
+                }
+                case 4 -> {
+                    System.out.print("Nuevo correo electrónico: ");
+                    String newEmail = scanner.nextLine();
+                    accountController.updateEmail(account.getUser(), newEmail);
+                    System.out.println("Correo electrónico actualizado exitosamente.");
+                }
+                case 0 -> {}
+                default -> System.out.println("Opción inválida.");
+            }
+        } catch (AccountException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void changePasswordMenu(Account account) {
+        mostrarMensajeCentrado("==== CAMBIAR CONTRASEÑA ====");
+
+        String currentPassword;
+        String newPassword;
+
+        if (console != null) {
+            currentPassword = new String(console.readPassword("Contraseña actual: "));
+            newPassword = new String(console.readPassword("Nueva contraseña: "));
+        } else {
+            System.out.print("Contraseña actual: ");
+            currentPassword = scanner.nextLine();
+            System.out.print("Nueva contraseña: ");
+            newPassword = scanner.nextLine();
+        }
+
+        try {
+            accountController.updatePassword(account.getUser(), currentPassword, newPassword);
+            System.out.println("Contraseña actualizada exitosamente.");
+        } catch (AccountException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
     }
 
     public Account login(String username, String password) throws AccountException {
-        account = accountController.login(username, password);
+        Account account2 = accountController.login(username, password);
 
         System.out.print("\033[H\033[2J");
         System.out.flush();
 
-        mostrarMensajeCentrado("==== SISTEMA DE GESTIÓN LEVELING UP LIFE ====");
+        mostrarMensajeCentrado("==== SISTEMA DE GESTIÓN DE HORARIOS ====");
         System.out.println("Usuario actual: " + username + " \t\t\t\t modo: " +
-                (account.isAdmin() ? "ADMIN" : "USER"));
+                (account2.getTipoCuenta() != null ? account2.getTipoCuenta().getDescripcion() : "No definido"));
 
-        return account;
+        return account2;
     }
 
     public void registerAccount(Account newAccount) throws AccountException {
@@ -100,816 +224,578 @@ public class AccountMenuController {
         return new Account(nombre, apellido, phone, email, username, password, TipoCuenta.ESTUDIANTE);
     }
 
-    public void showMyAccount(Account account) {
-        mostrarMensajeCentrado(" MI CUENTA ");
-        displayAccountDetails(account);
-        showUserMenu();
-    }
-
-    private void displayAccountDetails(Account account) {
-        mostrarMensajeCentrado(" Detalles de la cuenta ");
-        System.out.println("Usuario: " + account.getUser());
-        System.out.println("Nombre: " + account.getNombre());
-        System.out.println("Apellido: " + account.getApellido());
-        System.out.println("Email: " + account.getEmail());
-        System.out.println("Teléfono: " + account.getPhone());
-        System.out.println("Tipo: " +
-                (account.getTipoCuenta() != null ? account.getTipoCuenta().getDescripcion() : "No definido"));
-    }
-
-    public void showUserMenu() {
-        int option;
-        do {
-            mostrarMensajeCentrado("==== MENÚ DE USUARIO ====");
-            System.out.println("1. Actualizar información de cuenta");
-            System.out.println("2. Cambiar contraseña");
-            System.out.println("0. Volver al menú principal");
-
-            option = readIntOption("Seleccione una opción: ");
-
-            try {
-                switch (option) {
-                    case 1 -> updateAccountMenu();
-                    case 2 -> changePasswordMenu();
-                    case 0 -> { }
-                    default -> System.out.println("Opción inválida.");
-                }
-            } catch (Exception e) { 
-                System.out.println("Error: " + e.getMessage());
-            }
-        } while (option != 0);
-    }
-
-    private void updateAccountMenu() {
-        mostrarMensajeCentrado("==== ACTUALIZAR INFORMACIÓN DE CUENTA ====");
-        System.out.println("1. Actualizar nombre");
-        System.out.println("2. Actualizar apellido");
-        System.out.println("3. Actualizar teléfono");
-        System.out.println("4. Actualizar correo electrónico");
-        System.out.println("0. Volver");
-
-        int option = readIntOption("Seleccione una opción: ");
-
+    // ==================== FUNCIONES ADMIN ====================
+    private void verTodasCuentasPaginado() {
+        clearScreen();
+        int pagina = 1;
+        int porPagina = 10;
+        List<Account> todasCuentas;
+        
         try {
-            switch (option) {
-                case 1 -> {
-                    System.out.print("Nuevo nombre: ");
-                    String newName = scanner.nextLine();
-                    accountController.updateName(account.getUser(), newName);
-                    System.out.println("Nombre actualizado exitosamente.");
-                }
-                case 2 -> {
-                    System.out.print("Nuevo nombre: ");
-                    String newLast = scanner.nextLine();
-                    accountController.updateLast(account.getUser(), newLast);
-                    System.out.println("Nombre actualizado exitosamente.");
-                }
-                case 3 -> {
-                    System.out.print("Nuevo teléfono: ");
-                    String newPhone = scanner.nextLine();
-                    accountController.updatePhone(account.getUser(), newPhone);
-                    System.out.println("Teléfono actualizado exitosamente.");
-                }
-                case 4 -> {
-                    System.out.print("Nuevo correo electrónico: ");
-                    String newEmail = scanner.nextLine();
-                    accountController.updateEmail(account.getUser(), newEmail);
-                    System.out.println("Correo electrónico actualizado exitosamente.");
-                }
-                case 0 -> { }
-                //case 0 -> { return; }
-                default -> System.out.println("Opción inválida.");
-            }
+            todasCuentas = accountController.getAllAccounts();
         } catch (AccountException e) {
-            System.out.println("Error: " + e.getMessage());
+            System.err.println("Error al obtener cuentas: " + e.getMessage());
+            return;
+        }
+
+        while (true) {
+            clearScreen();
+            int inicio = (pagina - 1) * porPagina;
+            int fin = Math.min(inicio + porPagina, todasCuentas.size());
+            
+            System.out.println("\n=== TODAS LAS CUENTAS (" + pagina + "/" + 
+                (int) Math.ceil((double)todasCuentas.size()/porPagina) + ") ===");
+            
+            for (int i = inicio; i < fin; i++) {
+                Account a = todasCuentas.get(i);
+                System.out.println(String.format("%d. %s %s (%s) - %s - %s", 
+                    i+1, a.getNombre(), a.getApellido(), a.getUser(), 
+                    a.getEmail(), a.getTipoCuenta()));
+            }
+            
+            System.out.println("\n1. Siguiente | 2. Anterior | 3. Ir a página | 0. Volver");
+            int opcion = readIntOption("Selección: ");
+            
+            switch (opcion) {
+                case 1:
+                    if (fin < todasCuentas.size()) pagina++;
+                    break;
+                case 2:
+                    if (pagina > 1) pagina--;
+                    break;
+                case 3:
+                    int nuevaPag = readIntOption("Ir a página: ");
+                    if (nuevaPag > 0 && nuevaPag <= Math.ceil((double)todasCuentas.size()/porPagina)) {
+                        pagina = nuevaPag;
+                    }
+                    break;
+                case 0:
+                    return;
+                default:
+                    System.out.println("Opción inválida.");
+            }
         }
     }
 
-    private void changePasswordMenu() {
-        mostrarMensajeCentrado("==== CAMBIAR CONTRASEÑA ====");
-
-        String currentPassword;
-        String newPassword;
-
-        if (console != null) {
-            currentPassword = new String(console.readPassword("Contraseña actual: "));
-            newPassword = new String(console.readPassword("Nueva contraseña: "));
-        } else {
-            System.out.print("Contraseña actual: ");
-            currentPassword = scanner.nextLine();
-            System.out.print("Nueva contraseña: ");
-            newPassword = scanner.nextLine();
-        }
-
+    private void buscarCuentasAvanzado() {
+        clearScreen();
+        System.out.println("\n=== BÚSQUEDA AVANZADA ===");
+        String nombre = readLine("Nombre (dejar vacío para omitir): ");
+        String apellido = readLine("Apellido (dejar vacío para omitir): ");
+        String email = readLine("Email (dejar vacío para omitir): ");
+        String usuario = readLine("Usuario (dejar vacío para omitir): ");
+        
         try {
-            accountController.updatePassword(account.getUser(), currentPassword, newPassword);
-            System.out.println("Contraseña actualizada exitosamente.");
-        } catch (AccountException e) {
-            System.out.println("Error: " + e.getMessage());
-        }
-    }
-
-    public void showAdmMenu() {
-        int option;
-        do {
-            mostrarMensajeCentrado("==== MENÚ DE ADMINISTRACIÓN DE CUENTAS ====");
-            System.out.println("1. Ver todas las cuentas (paginado)");
-            System.out.println("2. Buscar cuentas (avanzado)");
-            System.out.println("3. Filtrar cuentas por rol");
-            System.out.println("4. Modificar estado de administrador");
-            System.out.println("5. Eliminar cuenta");
-            System.out.println("6. Resetear contraseña");
-            System.out.println("7. Ver estadísticas");
-            System.out.println("8. Crear cuenta docente/administrador");
-            System.out.println("9. Gestión de sustituciones");
-            System.out.println("0. Volver al menú principal");
-
-            option = readIntOption("Seleccione una opción: ");
-
-            try {
-                switch (option) {
-                    case 1 -> showAllAccountsMenu();
-                    case 2 -> searchAccountsMenu();
-                    case 3 -> filterAccountsByRole();
-                    case 4 -> modifyAdminStatusMenu();
-                    case 5 -> deleteAccountMenu();
-                    case 6 -> resetPasswordMenu();
-                    case 7 -> showAccountStats();
-                    case 8 -> createAdminOrTeacherAccount();
-                    case 9 -> showSubstituteManagementMenu();
-                    case 0 -> { }
-                    default -> System.out.println("Opción inválida.");
-                }
-            } catch (Exception e) {
-                System.out.println("Error: " + e.getMessage());
-            }
-        } while (option != 0);
-    }
-
-    private void showAllAccountsMenu() throws AccountException {
-        int pageSize = 10; // Número de cuentas por página
-        int currentPage = 0;
-        List<Account> allAccounts = accountController.getAllAccounts();
-        int totalPages = (int) Math.ceil((double) allAccounts.size() / pageSize);
-
-        do {
-            mostrarMensajeCentrado("==== TODAS LAS CUENTAS (Página " + (currentPage + 1) + "/" + totalPages + ") ====");
-
-            // Mostrar cuentas de la página actual
-            List<Account> pageAccounts = allAccounts.stream()
-                    .skip((long) currentPage * pageSize)
-                    .limit(pageSize)
+            List<Account> resultados = accountController.getAllAccounts().stream()
+                    .filter(a -> nombre.isEmpty() || a.getNombre().toLowerCase().contains(nombre.toLowerCase()))
+                    .filter(a -> apellido.isEmpty() || a.getApellido().toLowerCase().contains(apellido.toLowerCase()))
+                    .filter(a -> email.isEmpty() || a.getEmail().toLowerCase().contains(email.toLowerCase()))
+                    .filter(a -> usuario.isEmpty() || a.getUser().toLowerCase().contains(usuario.toLowerCase()))
                     .toList();
-
-            for (Account acc : pageAccounts) {
-                System.out.println("Usuario: " + acc.getUser() +
-                        " | Nombre: " + acc.getFullName() +
-                        " | Rol: " + acc.getTipoCuenta().getDescripcion());
+            
+            if (resultados.isEmpty()) {
+                System.out.println("\nNo se encontraron cuentas con esos criterios.");
+            } else {
+                System.out.println("\n=== RESULTADOS ===");
+                resultados.forEach(a -> System.out.println(
+                    String.format("%s %s (%s) - %s - %s", 
+                    a.getNombre(), a.getApellido(), a.getUser(), a.getEmail(), a.getTipoCuenta())
+                ));
             }
-
-            System.out.println("\n1. Página anterior");
-            System.out.println("2. Página siguiente");
-            System.out.println("3. Filtrar por rol");
-            System.out.println("0. Volver");
-
-            int option = readIntOption("Seleccione una opción: ");
-
-            switch (option) {
-                case 1 -> {
-                    if (currentPage > 0) currentPage--;
-                }
-                case 2 -> {
-                    if (currentPage < totalPages - 1) currentPage++;
-                }
-                case 3 -> filterAccountsByRole();
-                case 0 -> { return; }
-                default -> System.out.println("Opción inválida.");
-            }
-        } while (true);
+        } catch (AccountException e) {
+            System.err.println("Error al buscar: " + e.getMessage());
+        }
+        readLine("\nPresione Enter para continuar...");
     }
 
-    private void filterAccountsByRole() throws AccountException {
-        System.out.println("Filtrar por rol:");
-        System.out.println("1. Estudiantes");
+    private void filtrarPorRol() {
+        clearScreen();
+        System.out.println("\n=== FILTRAR POR ROL ===");
+        System.out.println("1. Administradores");
         System.out.println("2. Profesores");
-        System.out.println("3. Administradores");
-        System.out.println("0. Cancelar");
-
-        int option = readIntOption("Seleccione una opción: ");
-        TipoCuenta tipo;
-
-        switch (option) {
-            case 1 -> tipo = TipoCuenta.ESTUDIANTE;
-            case 2 -> tipo = TipoCuenta.PROFESOR;
-            case 3 -> tipo = TipoCuenta.ADMIN;
-            case 0 -> { return; }
-            default -> {
+        System.out.println("3. Estudiantes");
+        System.out.println("0. Volver");
+        
+        int opcion = readIntOption("Selección: ");
+        TipoCuenta rol;
+        
+        switch (opcion) {
+            case 1: rol = TipoCuenta.ADMIN; break;
+            case 2: rol = TipoCuenta.PROFESOR; break;
+            case 3: rol = TipoCuenta.ESTUDIANTE; break;
+            case 0: return;
+            default: 
                 System.out.println("Opción inválida.");
                 return;
+        }
+        
+        try {
+            List<Account> resultados = accountController.getAllAccounts().stream()
+                    .filter(a -> a.getTipoCuenta() == rol)
+                    .toList();
+            
+            if (resultados.isEmpty()) {
+                System.out.println("\nNo se encontraron cuentas con ese rol.");
+            } else {
+                System.out.println("\n=== RESULTADOS ===");
+                resultados.forEach(a -> System.out.println(
+                    String.format("%s %s (%s) - %s", 
+                    a.getNombre(), a.getApellido(), a.getUser(), a.getEmail())
+                ));
             }
+        } catch (AccountException e) {
+            System.err.println("Error al filtrar: " + e.getMessage());
         }
-
-        TipoCuenta finalTipo = tipo;
-        List<Account> filteredAccounts = accountController.getAllAccounts().stream()
-                .filter(acc -> finalTipo.equals(acc.getTipoCuenta())) // Usar equals() en lugar de ==
-                .toList();
-
-        mostrarMensajeCentrado("==== CUENTAS FILTRADAS (" + tipo.getDescripcion() + ") ====");
-        filteredAccounts.forEach(acc ->
-                System.out.println(
-                        "Usuario: " + acc.getUser() +
-                                " | Nombre: " + acc.getFullName() +
-                                " | Email: " + acc.getEmail()
-                )
-        );
-        System.out.println("\nTotal: " + filteredAccounts.size() + " cuentas.");
-        System.out.print("Presione Enter para continuar...");
-        scanner.nextLine();
+        readLine("\nPresione Enter para continuar...");
     }
 
-    private void searchAccountsMenu() throws AccountException {
-        mostrarMensajeCentrado("==== BUSCAR CUENTAS ====");
-        System.out.println("1. Buscar por nombre");
-        System.out.println("2. Buscar por email");
-        System.out.println("3. Buscar por usuario");
-        System.out.println("0. Volver");
-
-        int option = readIntOption("Seleccione una opción: ");
-        String searchTerm;
-
-        switch (option) {
-            case 1 -> {
-                System.out.print("Ingrese el nombre a buscar: ");
-                searchTerm = scanner.nextLine();
-                searchAccountsByName(searchTerm);
-            }
-            case 2 -> {
-                System.out.print("Ingrese el email a buscar: ");
-                searchTerm = scanner.nextLine();
-                searchAccountsByEmail(searchTerm);
-            }
-            case 3 -> {
-                System.out.print("Ingrese el usuario a buscar: ");
-                searchTerm = scanner.nextLine();
-                searchAccountsByUsername(searchTerm);
-            }
-            case 0 -> { }
-            //case 0 -> { return; }
-            default -> System.out.println("Opción inválida.");
-        }
-    }
-
-    private void searchAccountsByName(String name) throws AccountException {
-        List<Account> results = accountController.getAllAccounts().stream()
-                .filter(acc -> acc.getNombre().toLowerCase().contains(name.toLowerCase()) ||
-                        acc.getApellido().toLowerCase().contains(name.toLowerCase()))
-                .collect(Collectors.toList());
-
-        displaySearchResults(results, "nombre", name);
-    }
-
-    private void searchAccountsByEmail(String email) throws AccountException {
-        List<Account> results = accountController.getAllAccounts().stream()
-                .filter(acc -> acc.getEmail().toLowerCase().contains(email.toLowerCase()))
-                .collect(Collectors.toList());
-
-        displaySearchResults(results, "email", email);
-    }
-
-    private void searchAccountsByUsername(String username) throws AccountException {
-        List<Account> results = accountController.getAllAccounts().stream()
-                .filter(acc -> acc.getUser().toLowerCase().contains(username.toLowerCase()))
-                .collect(Collectors.toList());
-
-        displaySearchResults(results, "usuario", username);
-    }
-
-    private void displaySearchResults(List<Account> results, String filterType, String term) {
-        mostrarMensajeCentrado("==== RESULTADOS DE BÚSQUEDA (" + filterType + ": " + term + ") ====");
-        if (results.isEmpty()) {
-            System.out.println("No se encontraron coincidencias.");
-        } else {
-            results.forEach(acc -> System.out.println(
-                    "Usuario: " + acc.getUser() +
-                            " | Nombre: " + acc.getFullName() +
-                            " | Rol: " + acc.getTipoCuenta().getDescripcion()
-            ));
-        }
-        System.out.println("\nTotal: " + results.size() + " resultados.");
-        System.out.print("Presione Enter para continuar...");
-        scanner.nextLine();
-    }
-
-    private void resetPasswordMenu() throws AccountException {
-        mostrarMensajeCentrado("==== RESETEAR CONTRASEÑA ====");
-        System.out.print("Ingrese el usuario de la cuenta: ");
-        String username = scanner.nextLine();
-
-        Account targetAccount = accountController.getByUsername(username);
-        if (targetAccount == null) {
-            System.out.println("Usuario no encontrado.");
-            return;
-        }
-
-        String newPassword = "Temp1234"; // Contraseña temporal
-        accountController.resetUserPassword(username, newPassword);
-        System.out.println("Contraseña reseteada a: " + newPassword);
-    }
-
-    private void showAccountStats() throws AccountException {
-        List<Account> allAccounts = accountController.getAllAccounts();
-
-        long totalStudents = allAccounts.stream().filter(Account::isEstudiante).count();
-        long totalTeachers = allAccounts.stream().filter(Account::isProfesor).count();
-        long totalAdmins = allAccounts.stream().filter(Account::isAdmin).count();
-
-        mostrarMensajeCentrado("==== ESTADÍSTICAS DE CUENTAS ====");
-        System.out.println("Total de cuentas: " + allAccounts.size());
-        System.out.println("Estudiantes: " + totalStudents);
-        System.out.println("Profesores: " + totalTeachers);
-        System.out.println("Administradores: " + totalAdmins);
-        System.out.print("Presione Enter para continuar...");
-        scanner.nextLine();
-    }
-
-    private void modifyAdminStatusMenu() throws AccountException, SubstituteException {
-    mostrarMensajeCentrado("==== MODIFICAR ROL DE CUENTA ====");
-    System.out.print("Ingrese el nombre de usuario de la cuenta a modificar: ");
-    String username = scanner.nextLine();
-
-    Account targetAccount = accountController.getByUsername(username);
-    if (targetAccount == null) {
-        System.out.println("Error: Usuario no encontrado.");
-        return;
-    }
-
-    // Mostrar información actual de la cuenta
-    System.out.println("\nCuenta seleccionada:");
-    System.out.println("Usuario: " + targetAccount.getUser());
-    System.out.println("Nombre: " + targetAccount.getFullName());
-    System.out.println("Rol actual: " + targetAccount.getTipoCuenta().getDescripcion());
-
-    // Menú para seleccionar nuevo rol
-    System.out.println("\nSeleccione el nuevo rol:");
-    System.out.println("1. Administrador");
-    System.out.println("2. Profesor");
-    System.out.println("3. Estudiante");
-    System.out.println("0. Cancelar");
-
-    int option = readIntOption("Opción: ");
-    TipoCuenta newRole = null; // Declarar la variable aquí
-
-    switch (option) {
-        case 1 -> newRole = TipoCuenta.ADMIN;
-        case 2 -> newRole = TipoCuenta.PROFESOR;
-        case 3 -> newRole = TipoCuenta.ESTUDIANTE;
-        case 0 -> {
-            System.out.println("Operación cancelada.");
-            return;
-        }
-        default -> {
-            System.out.println("Opción inválida.");
-            return;
-        }
-    }
-
-    // Validar si el nuevo rol es diferente al actual
-    if (targetAccount.getTipoCuenta() == newRole) {
-        System.out.println("La cuenta ya tiene este rol.");
-        return;
-    }
-
-    // Confirmar acción
-    System.out.print("¿Confirmar cambio de rol a " + newRole.getDescripcion() + "? (S/N): ");
-    String confirm = scanner.nextLine().trim().toUpperCase();
-
-    if (confirm.equals("S")) {
-        if (newRole == TipoCuenta.ADMIN && targetAccount.isProfesor()) {
-            System.out.println("\nDebe asignar un sustituto para este profesor:");
-            promoteProfessorToAdmin();
-        } else {
-            targetAccount.setTipoCuenta(newRole);
-            accountController.saveChanges();
-            System.out.println("Rol actualizado exitosamente.");
-        }
-    } else {
-        System.out.println("Operación cancelada.");
-    }
-}
-
-    private void deleteAccountMenu() throws AccountException {
-        mostrarMensajeCentrado("==== ELIMINAR CUENTA ====");
-        System.out.print("Ingrese el nombre de usuario de la cuenta a eliminar: ");
-        String user = scanner.nextLine();
-
-        Account targetAccount = accountController.getByUsername(user);
-        if (targetAccount == null) {
-            System.out.println("Error: Usuario no encontrado.");
-            return;
-        }
-
-        // Mostrar información de la cuenta
-        System.out.println("\nCuenta seleccionada:");
-        System.out.println("Usuario: " + targetAccount.getUser());
-        System.out.println("Nombre: " + targetAccount.getFullName());
-        System.out.println("Rol: " + targetAccount.getTipoCuenta().getDescripcion());
-
-        // Validar si es el último admin
-        if (targetAccount.isAdmin()) {
-            long adminCount = accountController.getAllAccounts().stream()
-                    .filter(Account::isAdmin)
-                    .count();
-            if (adminCount <= 1) {
-                System.out.println("Error: No se puede eliminar el último administrador.");
+    private void modificarEstadoAdmin() {
+        clearScreen();
+        String usuario = readLine("Ingrese el nombre de usuario a modificar: ");
+        
+        try {
+            Account cuenta = accountController.getByUsername(usuario);
+            if (cuenta == null) {
+                System.out.println("Usuario no encontrado.");
                 return;
             }
-        }
-
-        // Confirmar eliminación
-        System.out.print("¿Está seguro de eliminar esta cuenta? (S/N): ");
-        String confirm = scanner.nextLine().trim().toUpperCase();
-
-        if (confirm.equals("S")) {
-            accountController.deleteAccount(user);
-            System.out.println("Cuenta eliminada exitosamente.");
-        } else {
-            System.out.println("Operación cancelada.");
-        }
-    }
-
-    public void mostrarMensajeCentrado(String mensaje) {
-        int longitudMaxima = 73;
-        int longitudMensaje = mensaje.length();
-        int espaciosIzquierda = (longitudMaxima - longitudMensaje) / 2;
-        int espaciosDerecha = longitudMaxima - longitudMensaje - espaciosIzquierda;
-        String lineaCentrada = "=".repeat(espaciosIzquierda) + mensaje + "=".repeat(espaciosDerecha);
-        System.out.println(lineaCentrada);
-    }
-
-    private int readIntOption(String message) {
-        while (true) {
-            try {
-                System.out.print(message);
-                return Integer.parseInt(scanner.nextLine());
-            } catch (NumberFormatException e) {
-                System.out.println("Por favor, ingrese un número válido.");
-            }
-        }
-    }
-
-    private void createAdminOrTeacherAccount() throws AccountException {
-        mostrarMensajeCentrado("==== CREAR CUENTA (ADMIN/DOCENTE) ====");
-
-        System.out.print("Nombre: ");
-        String nombre = scanner.nextLine();
-
-        System.out.print("Apellido: ");
-        String apellido = scanner.nextLine();
-
-        System.out.print("Teléfono: ");
-        String phone = scanner.nextLine();
-
-        System.out.print("Email: ");
-        String email = scanner.nextLine();
-
-        System.out.print("Usuario: ");
-        String username = scanner.nextLine();
-
-        String password;
-        if (console != null) {
-            password = new String(console.readPassword("Contraseña: "));
-        } else {
-            System.out.print("Contraseña: ");
-            password = scanner.nextLine();
-        }
-
-        // Selección de tipo de cuenta
-        System.out.println("\nSeleccione el tipo de cuenta:");
-        System.out.println("1. Administrador");
-        System.out.println("2. Profesor");
-        int tipo = readIntOption("Opción: ");
-
-        TipoCuenta accountType;
-        switch (tipo) {
-            case 1 -> {
-                accountType = TipoCuenta.ADMIN;
-                if (!email.endsWith("@admin.umss.edu")) {
-                    System.out.println("Error: Email debe terminar en @admin.umss.edu");
-                    return;
-                }
-            }
-            case 2 -> {
-                accountType = TipoCuenta.PROFESOR;
-                if (!email.endsWith("@prf.umss.edu")) {
-                    System.out.println("Error: Email debe terminar en @prf.umss.edu");
-                    return;
-                }
-            }
-            default -> {
-                System.out.println("Opción inválida");
+            
+            // Mostrar información actual de la cuenta
+            System.out.println("\nCuenta seleccionada:");
+            System.out.println("Usuario: " + cuenta.getUser());
+            System.out.println("Nombre: " + cuenta.getNombre() + " " + cuenta.getApellido());
+            System.out.println("Rol actual: " + cuenta.getTipoCuenta().getDescripcion());
+            
+            // Solo permitir cambiar entre profesor y admin
+            if (cuenta.getTipoCuenta() != TipoCuenta.PROFESOR && cuenta.getTipoCuenta() != TipoCuenta.ADMIN) {
+                System.out.println("Esta función solo aplica a cuentas de profesor o administrador.");
                 return;
             }
-        }
-
-        Account newAccount = new Account(nombre, apellido, phone, email, username, password, accountType);
-        accountController.registerAccount(newAccount);
-        System.out.println("¡Cuenta creada exitosamente!");
-    }
-
-    private void showSubstituteManagementMenu() throws AccountException, SubstituteException {
-        int option;
-        do {
-            mostrarMensajeCentrado("==== GESTIÓN DE SUSTITUCIONES ====");
-            System.out.println("1. Promover profesor a administrador");
-            System.out.println("2. Revertir administrador a profesor");
-            System.out.println("3. Ver sustituciones activas");
-            System.out.println("0. Volver al menú principal");
-
-            option = readIntOption("Seleccione una opción: ");
-
-            try {
-                switch (option) {
-                    case 1 -> promoteProfessorToAdmin();
-                    case 2 -> revertAdminToProfessor();
-                    case 3 -> showActiveSubstitutes();
-                    case 0 -> { }
-                    default -> System.out.println("Opción inválida.");
-                }
-            } catch (Exception e) {
-                System.out.println("Error: " + e.getMessage());
-            }
-        } while (option != 0);
-    }
-
-    private void promoteProfessorToAdmin() throws AccountException, SubstituteException {
-        mostrarMensajeCentrado("==== PROMOVER PROFESOR A ADMINISTRADOR ====");
-
-        // Mostrar lista de profesores disponibles
-        List<Account> profesores = accountController.getAllAccounts().stream()
-                .filter(Account::isProfesor)
-                .toList();
-
-        if (profesores.isEmpty()) {
-            System.out.println("No hay profesores disponibles para promover.");
-            return;
-        }
-
-        System.out.println("\nProfesores disponibles:");
-        for (int i = 0; i < profesores.size(); i++) {
-            Account prof = profesores.get(i);
-            System.out.printf("%d. %s (%s)%n", i + 1, prof.getFullName(), prof.getUser());
-        }
-
-        int profIndex = readIntOption("\nSeleccione el profesor a promover (0 para cancelar): ") - 1;
-        if (profIndex < 0 || profIndex >= profesores.size()) {
-            System.out.println("Operación cancelada.");
-            return;
-        }
-        Account profesor = profesores.get(profIndex);
-
-        // Opciones para seleccionar sustituto
-        mostrarMensajeCentrado("==== SELECCIONAR SUSTITUTO ====");
-        System.out.println("1. Seleccionar profesor existente");
-        System.out.println("2. Crear nuevo profesor como sustituto");
-        System.out.println("0. Cancelar");
-
-        int opcionSustituto = readIntOption("Seleccione una opción: ");
-        Account sustituto = null;
-
-        switch (opcionSustituto) {
-            case 1 -> {
-                // Seleccionar profesor existente
-                List<Account> posiblesSustitutos = profesores.stream()
-                        .filter(p -> !p.getId().equals(profesor.getId()))
-                        .toList();
-
-                if (posiblesSustitutos.isEmpty()) {
-                    System.out.println("No hay otros profesores disponibles como sustitutos.");
-                    return;
-                }
-
-                System.out.println("\nSustitutos disponibles:");
-                for (int i = 0; i < posiblesSustitutos.size(); i++) {
-                    Account sub = posiblesSustitutos.get(i);
-                    System.out.printf("%d. %s (%s)%n", i + 1, sub.getFullName(), sub.getUser());
-                }
-
-                int subIndex = readIntOption("\nSeleccione el sustituto (0 para cancelar): ") - 1;
-                if (subIndex < 0 || subIndex >= posiblesSustitutos.size()) {
-                    System.out.println("Operación cancelada.");
-                    return;
-                }
-                sustituto = posiblesSustitutos.get(subIndex);
-            }
-            case 2 -> {
-                // Crear nuevo profesor como sustituto
-                mostrarMensajeCentrado("==== CREAR NUEVO PROFESOR ====");
-
-                System.out.print("Nombre: ");
-                String nombre = scanner.nextLine();
-
-                System.out.print("Apellido: ");
-                String apellido = scanner.nextLine();
-
-                System.out.print("Teléfono: ");
-                String phone = scanner.nextLine();
-
-                System.out.print("Email (debe terminar en @prf.umss.edu): ");
-                String email = scanner.nextLine();
-
-                if (!email.endsWith("@prf.umss.edu")) {
-                    System.out.println("Error: Email debe terminar en @prf.umss.edu");
-                    return;
-                }
-
-                System.out.print("Usuario: ");
-                String username = scanner.nextLine();
-
-                String password;
-                if (console != null) {
-                    password = new String(console.readPassword("Contraseña: "));
+            
+            TipoCuenta nuevoRol = (cuenta.getTipoCuenta() == TipoCuenta.PROFESOR) ? 
+                TipoCuenta.ADMIN : TipoCuenta.PROFESOR;
+            
+            System.out.println("\nAcción a realizar:");
+            System.out.println("1. Convertir a " + nuevoRol.getDescripcion());
+            System.out.println("0. Cancelar");
+            
+            int opcion = readIntOption("Selección: ");
+            
+            if (opcion == 1) {
+                if (nuevoRol == TipoCuenta.ADMIN) {
+                    // Si estamos promoviendo a admin, necesitamos un sustituto
+                    promoverAAdmin(cuenta);
                 } else {
-                    System.out.print("Contraseña: ");
-                    password = scanner.nextLine();
+                    // Si estamos revirtiendo a profesor
+                    revertirAProfesor(cuenta);
                 }
-
-                // Crear la nueva cuenta de profesor
-                sustituto = new Account(nombre, apellido, phone, email, username, password, TipoCuenta.PROFESOR);
-                accountController.registerAccount(sustituto);
-                System.out.println("Nuevo profesor creado y seleccionado como sustituto.");
             }
-            case 0 -> {
+        } catch (AccountException e) {
+            System.err.println("Error al modificar: " + e.getMessage());
+        }
+        readLine("\nPresione Enter para continuar...");
+    }
+
+    private void promoverAAdmin(Account profesor) throws AccountException {
+        clearScreen();
+        mostrarMensajeCentrado("==== ASIGNAR SUSTITUTO ====");
+        
+        try {
+            // Obtener lista de profesores disponibles (excluyendo al que se promueve)
+            List<Account> profesores = accountController.getAllAccounts().stream()
+                    .filter(a -> a.getTipoCuenta() == TipoCuenta.PROFESOR)
+                    .filter(a -> !a.getId().equals(profesor.getId()))
+                    .toList();
+            
+            if (profesores.isEmpty()) {
+                System.out.println("No hay otros profesores disponibles para asignar como sustitutos.");
+                return;
+            }
+            
+            System.out.println("\nProfesores disponibles como sustitutos:");
+            for (int i = 0; i < profesores.size(); i++) {
+                Account p = profesores.get(i);
+                System.out.printf("%d. %s %s (%s)%n", i+1, p.getNombre(), p.getApellido(), p.getUser());
+            }
+            
+            int seleccion = readIntOption("\nSeleccione el sustituto (0 para cancelar): ") - 1;
+            if (seleccion < 0 || seleccion >= profesores.size()) {
                 System.out.println("Operación cancelada.");
                 return;
             }
-            default -> {
-                System.out.println("Opción inválida.");
+            
+            Account sustituto = profesores.get(seleccion);
+            
+            // Solicitar fechas de sustitución
+            System.out.print("\nFecha de inicio (AAAA-MM-DD): ");
+            LocalDate startDate = LocalDate.parse(scanner.nextLine());
+            
+            System.out.print("Fecha de fin (dejar vacío para indefinido): ");
+            String endDateStr = scanner.nextLine();
+            LocalDate endDate = endDateStr.isEmpty() ? null : LocalDate.parse(endDateStr);
+            
+            // Confirmar operación
+            System.out.println("\nResumen de la operación:");
+            System.out.println("Profesor a promover: " + profesor.getNombre() + " " + profesor.getApellido());
+            System.out.println("Sustituto asignado: " + sustituto.getNombre() + " " + sustituto.getApellido());
+            System.out.println("Período: " + startDate + " hasta " + (endDate != null ? endDate : "indefinido"));
+            
+            String confirmacion = readLine("\n¿Confirmar la operación? (S/N): ").toUpperCase();
+            if (confirmacion.equals("S")) {
+                accountController.promoteToAccount(profesor.getUser(), sustituto.getId(), startDate, endDate);
+                System.out.println("Profesor promovido a administrador exitosamente.");
+            } else {
+                System.out.println("Operación cancelada.");
+            }
+        } catch (Exception e) {
+            throw new AccountException("Error al promover a administrador: " + e.getMessage());
+        }
+    }
+
+    private void revertirAProfesor(Account admin) throws AccountException {
+        try {
+            // Verificar que el admin tenga un sustituto asignado
+            if (!admin.hasSubstitute()) {
+                System.out.println("Este administrador no tiene un sustituto asignado.");
                 return;
             }
-        }
-
-
-
-
-        // Fechas de sustitución
-        System.out.print("\nFecha de inicio (AAAA-MM-DD): ");
-        LocalDate startDate = LocalDate.parse(scanner.nextLine());
-
-        System.out.print("Fecha de fin (AAAA-MM-DD o dejar vacío para indefinido): ");
-        String endDateStr = scanner.nextLine();
-        LocalDate endDate = endDateStr.isEmpty() ? null : LocalDate.parse(endDateStr);
-
-        // Confirmación
-        System.out.println("\nResumen:");
-        System.out.println("Profesor a promover: " + profesor.getFullName());
-        System.out.println("Sustituto: " + sustituto.getFullName());
-        System.out.println("Período: " + startDate + " hasta " + (endDate != null ? endDate : "indefinido"));
-
-        System.out.print("\n¿Confirmar promoción? (S/N): ");
-        String confirm = scanner.nextLine().trim().toUpperCase();
-
-        if (confirm.equals("S")) {
-            accountController.promoteToAccount(profesor.getUser(), sustituto.getId(), startDate, endDate);
-            System.out.println("Profesor promovido exitosamente a administrador.");
-        } else {
-            System.out.println("Operación cancelada.");
+            
+            // Confirmar operación
+            System.out.println("\nResumen de la operación:");
+            System.out.println("Administrador a revertir: " + admin.getNombre() + " " + admin.getApellido());
+            
+            String confirmacion = readLine("\n¿Confirmar la reversión a profesor? (S/N): ").toUpperCase();
+            if (confirmacion.equals("S")) {
+                accountController.revertToProfessor(admin.getUser());
+                System.out.println("Administrador revertido a profesor exitosamente.");
+            } else {
+                System.out.println("Operación cancelada.");
+            }
+        } catch (SubstituteException e) {
+            throw new AccountException("Error al revertir a profesor: " + e.getMessage());
         }
     }
 
-    private void revertAdminToProfessor() throws AccountException, SubstituteException {
-        mostrarMensajeCentrado("==== REVERTIR ADMINISTRADOR A PROFESOR ====");
-
-        // Mostrar lista de administradores que eran profesores
-        List<Account> admins = accountController.getAllAccounts().stream()
-                .filter(a -> a.isAdmin() && a.hasSubstitute())
-                .toList();
-
-        if (admins.isEmpty()) {
-            System.out.println("No hay administradores que puedan ser revertidos a profesores.");
-            return;
+    private void eliminarCuenta() {
+        clearScreen();
+        String usuario = readLine("Ingrese el nombre de usuario a eliminar: ");
+        
+        try {
+            System.out.println("\n¿Está seguro que desea eliminar la cuenta " + usuario + "?");
+            System.out.println("1. Confirmar eliminación");
+            System.out.println("0. Cancelar");
+            
+            int opcion = readIntOption("Selección: ");
+            if (opcion == 1) {
+                accountController.deleteAccount(usuario);
+                System.out.println("Cuenta eliminada exitosamente.");
+            }
+        } catch (AccountException e) {
+            System.err.println("Error al eliminar: " + e.getMessage());
         }
-
-        System.out.println("\nAdministradores disponibles:");
-        for (int i = 0; i < admins.size(); i++) {
-            Account admin = admins.get(i);
-            System.out.printf("%d. %s (%s)%n", i + 1, admin.getFullName(), admin.getUser());
-        }
-
-        int adminIndex = readIntOption("\nSeleccione el administrador a revertir (0 para cancelar): ") - 1;
-        if (adminIndex < 0 || adminIndex >= admins.size()) {
-            System.out.println("Operación cancelada.");
-            return;
-        }
-        Account admin = admins.get(adminIndex);
-
-        // Confirmación
-        System.out.println("\nResumen:");
-        System.out.println("Administrador a revertir: " + admin.getFullName());
-
-        System.out.print("\n¿Confirmar reversión? (S/N): ");
-        String confirm = scanner.nextLine().trim().toUpperCase();
-
-        if (confirm.equals("S")) {
-            accountController.revertToProfessor(admin.getUser());
-            System.out.println("Administrador revertido exitosamente a profesor.");
-        } else {
-            System.out.println("Operación cancelada.");
-        }
+        readLine("\nPresione Enter para continuar...");
     }
 
-    private void showActiveSubstitutes() throws SubstituteException {
-        mostrarMensajeCentrado("==== SUSTITUCIONES ACTIVAS ====");
+    private void resetearContrasena() {
+        clearScreen();
+        String usuario = readLine("Ingrese el nombre de usuario: ");
+        String nuevaContrasena = readLine("Ingrese la nueva contraseña: ");
+        
+        try {
+            accountController.resetUserPassword(usuario, nuevaContrasena);
+            System.out.println("Contraseña actualizada exitosamente.");
+        } catch (AccountException e) {
+            System.err.println("Error al resetear contraseña: " + e.getMessage());
+        }
+        readLine("\nPresione Enter para continuar...");
+    }
 
-        SubstituteController subController = new SubstituteController(substituteFile);
-        List<Substitute> activeSubstitutes = subController.getActiveSubstitutes();
+    private void verEstadisticas() {
+        clearScreen();
+        try {
+            List<Account> cuentas = accountController.getAllAccounts();
+            long total = cuentas.size();
+            long admins = cuentas.stream().filter(a -> a.getTipoCuenta() == TipoCuenta.ADMIN).count();
+            long profesores = cuentas.stream().filter(a -> a.getTipoCuenta() == TipoCuenta.PROFESOR).count();
+            long estudiantes = cuentas.stream().filter(a -> a.getTipoCuenta() == TipoCuenta.ESTUDIANTE).count();
+            
+            System.out.println("\n=== ESTADÍSTICAS DE CUENTAS ===");
+            System.out.println("Total de cuentas: " + total);
+            System.out.println("Administradores: " + admins + " (" + (admins*100/total) + "%)");
+            System.out.println("Profesores: " + profesores + " (" + (profesores*100/total) + "%)");
+            System.out.println("Estudiantes: " + estudiantes + " (" + (estudiantes*100/total) + "%)");
+        } catch (AccountException e) {
+            System.err.println("Error al obtener estadísticas: " + e.getMessage());
+        }
+        readLine("\nPresione Enter para continuar...");
+    }
 
-        if (activeSubstitutes.isEmpty()) {
-            System.out.println("No hay sustituciones activas en este momento.");
-        } else {
-            for (Substitute sub : activeSubstitutes) {
-                Account original = null;
-                Account substitute = null;
-                try {
-                    original = accountController.getById(sub.getOriginalTeacherId());
-                } catch (AccountException e) {
-                    System.out.println("Error al obtener el profesor original: " + e.getMessage());
-                }
-                try {
-                    substitute = accountController.getById(sub.getSubstituteTeacherId());
-                } catch (AccountException e) {
-                    System.out.println("Error al obtener el sustituto: " + e.getMessage());
-                }
+    private void crearCuentaDocenteAdmin() {
+        clearScreen();
+        System.out.println("\n=== CREAR CUENTA DOCENTE/ADMIN ===");
+        
+        String nombre = readLine("Nombre: ");
+        String apellido = readLine("Apellido: ");
+        String telefono = readLine("Teléfono: ");
+        String email = readLine("Email: ");
+        String usuario = readLine("Usuario: ");
+        String contrasena = readLine("Contraseña: ");
+        
+        System.out.println("\nTipo de cuenta:");
+        System.out.println("1. Docente");
+        System.out.println("2. Administrador");
+        int tipo = readIntOption("Selección: ");
+        
+        if (tipo < 1 || tipo > 2) {
+            System.out.println("Opción inválida.");
+            return;
+        }
+        
+        try {
+            TipoCuenta tipoCuenta = (tipo == 1) ? TipoCuenta.PROFESOR : TipoCuenta.ADMIN;
+            Account nuevaCuenta = new Account(nombre, apellido, telefono, email, usuario, contrasena, tipoCuenta);
+            accountController.registerAccount(nuevaCuenta);
+            System.out.println("Cuenta creada exitosamente.");
+        } catch (IllegalArgumentException | AccountException e) {
+            System.err.println("Error al crear cuenta: " + e.getMessage());
+        }
+        readLine("\nPresione Enter para continuar...");
+    }
 
-                System.out.println("\nProfesor original: " +
-                        (original != null ? original.getFullName() : "Desconocido"));
-                System.out.println("Sustituto: " +
-                        (substitute != null ? substitute.getFullName() : "Desconocido"));
-                System.out.println("Período: " + sub.getStartDate() + " hasta " +
-                        (sub.getEndDate() != null ? sub.getEndDate() : "indefinido"));
-                System.out.println("Estado: " + (sub.isActive() ? "ACTIVO" : "INACTIVO"));
+    private void gestionSustituciones() {
+    clearScreen();
+    System.out.println("\n=== GESTIÓN DE SUSTITUCIONES ===");
+    
+    try {
+        Substitute prototype = new Substitute();
+        IFile<Substitute> fileHandler = new FileHandler<>(prototype);
+        SubstituteController subController = new SubstituteController(fileHandler);
+        
+        while (true) {
+            System.out.println("\n1. Promover profesor a administrador");
+            System.out.println("2. Revertir administrador a profesor");
+            System.out.println("3. Ver sustituciones activas");
+            System.out.println("4. Finalizar sustitución");
+            System.out.println("0. Volver al menú anterior");
+            
+            int opcion = readIntOption("Selección: ");
+            
+            switch (opcion) {
+                case 1 -> promoverProfesorAAdmin(subController);
+                case 2 -> revertirAdminAProfesor(subController);
+                case 3 -> mostrarSustitucionesActivas(subController);
+                case 4 -> finalizarSustitucion(subController);
+                case 0 -> { return; }
+                default -> System.out.println("Opción inválida.");
             }
         }
+    } catch (Exception e) {
+        System.err.println("Error en gestión de sustituciones: " + e.getMessage());
+        readLine("\nPresione Enter para continuar...");
+    }
+}
 
-        System.out.print("\nPresione Enter para continuar...");
-        scanner.nextLine();
+    private void promoverProfesorAAdmin(SubstituteController subController) {
+        clearScreen();
+        System.out.println("\n=== PROMOVER PROFESOR A ADMINISTRADOR ===");
+        
+        try {
+            // Obtener lista de profesores
+            List<Account> profesores = accountController.getAllAccounts().stream()
+                    .filter(a -> a.getTipoCuenta() == TipoCuenta.PROFESOR)
+                    .toList();
+            
+            if (profesores.isEmpty()) {
+                System.out.println("No hay profesores disponibles para promover.");
+                return;
+            }
+            
+            // Mostrar lista de profesores
+            System.out.println("\nProfesores disponibles:");
+            for (int i = 0; i < profesores.size(); i++) {
+                Account prof = profesores.get(i);
+                System.out.printf("%d. %s %s (%s)%n", i+1, prof.getNombre(), prof.getApellido(), prof.getUser());
+            }
+            
+            int seleccion = readIntOption("\nSeleccione el profesor a promover (0 para cancelar): ") - 1;
+            if (seleccion < 0 || seleccion >= profesores.size()) {
+                System.out.println("Operación cancelada.");
+                return;
+            }
+            
+            Account profesor = profesores.get(seleccion);
+            
+            // Seleccionar sustituto
+            List<Account> posiblesSustitutos = profesores.stream()
+                    .filter(p -> !p.getId().equals(profesor.getId()))
+                    .toList();
+            
+            if (posiblesSustitutos.isEmpty()) {
+                System.out.println("No hay otros profesores disponibles como sustitutos.");
+                return;
+            }
+            
+            System.out.println("\nSeleccione el sustituto:");
+            for (int i = 0; i < posiblesSustitutos.size(); i++) {
+                Account sub = posiblesSustitutos.get(i);
+                System.out.printf("%d. %s %s (%s)%n", i+1, sub.getNombre(), sub.getApellido(), sub.getUser());
+            }
+            
+            int seleccionSub = readIntOption("\nSeleccione el sustituto (0 para cancelar): ") - 1;
+            if (seleccionSub < 0 || seleccionSub >= posiblesSustitutos.size()) {
+                System.out.println("Operación cancelada.");
+                return;
+            }
+            
+            Account sustituto = posiblesSustitutos.get(seleccionSub);
+            
+            // Fechas de sustitución
+            System.out.print("\nFecha de inicio (AAAA-MM-DD): ");
+            LocalDate startDate = LocalDate.parse(scanner.nextLine());
+            
+            System.out.print("Fecha de fin (dejar vacío para indefinido): ");
+            String endDateStr = scanner.nextLine();
+            LocalDate endDate = endDateStr.isEmpty() ? null : LocalDate.parse(endDateStr);
+            
+            // Confirmar operación
+            System.out.println("\nResumen de la operación:");
+            System.out.println("Profesor a promover: " + profesor.getNombre() + " " + profesor.getApellido());
+            System.out.println("Sustituto asignado: " + sustituto.getNombre() + " " + sustituto.getApellido());
+            System.out.println("Período: " + startDate + " hasta " + (endDate != null ? endDate : "indefinido"));
+            
+            String confirmacion = readLine("\n¿Confirmar la operación? (S/N): ").toUpperCase();
+            if (confirmacion.equals("S")) {
+                accountController.promoteToAccount(profesor.getUser(), sustituto.getId(), startDate, endDate);
+                System.out.println("Profesor promovido a administrador exitosamente.");
+            } else {
+                System.out.println("Operación cancelada.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error al promover profesor: " + e.getMessage());
+        }
+        readLine("\nPresione Enter para continuar...");
     }
 
-    public static void main(String[] args) {
+    private void revertirAdminAProfesor(SubstituteController subController) {
+        clearScreen();
+        System.out.println("\n=== REVERTIR ADMINISTRADOR A PROFESOR ===");
+        
         try {
-            // Crear una instancia del controlador con una cuenta nula inicialmente
-            AccountMenuController controller = new AccountMenuController(null);
-            Scanner scanner = new Scanner(System.in);
+            // Obtener administradores que fueron profesores
+            List<Account> admins = accountController.getAllAccounts().stream()
+                    .filter(a -> a.getTipoCuenta() == TipoCuenta.ADMIN && a.hasSubstitute())
+                    .toList();
+            
+            if (admins.isEmpty()) {
+                System.out.println("No hay administradores que puedan ser revertidos a profesores.");
+                return;
+            }
+            
+            // Mostrar lista de administradores
+            System.out.println("\nAdministradores disponibles:");
+            for (int i = 0; i < admins.size(); i++) {
+                Account admin = admins.get(i);
+                System.out.printf("%d. %s %s (%s)%n", i+1, admin.getNombre(), admin.getApellido(), admin.getUser());
+            }
+            
+            int seleccion = readIntOption("\nSeleccione el administrador a revertir (0 para cancelar): ") - 1;
+            if (seleccion < 0 || seleccion >= admins.size()) {
+                System.out.println("Operación cancelada.");
+                return;
+            }
+            
+            Account admin = admins.get(seleccion);
+            
+            // Confirmar operación
+            System.out.println("\nResumen de la operación:");
+            System.out.println("Administrador a revertir: " + admin.getNombre() + " " + admin.getApellido());
+            
+            String confirmacion = readLine("\n¿Confirmar la reversión? (S/N): ").toUpperCase();
+            if (confirmacion.equals("S")) {
+                accountController.revertToProfessor(admin.getUser());
+                System.out.println("Administrador revertido a profesor exitosamente.");
+            } else {
+                System.out.println("Operación cancelada.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error al revertir administrador: " + e.getMessage());
+        }
+        readLine("\nPresione Enter para continuar...");
+    }
 
-            while (true) {
-                controller.mostrarMensajeCentrado("==== SISTEMA DE GESTIÓN DE CUENTAS ====");
-                System.out.println("1. Iniciar sesión");
-                System.out.println("2. Registrarse");
-                System.out.println("0. Salir");
-
-                int opcion = controller.readIntOption("Seleccione una opción: ");
-
-                switch (opcion) {
-                    case 1 -> {
-                        System.out.print("Usuario: ");
-                        String username = scanner.nextLine();
-                        System.out.print("Contraseña: ");
-                        String password = scanner.nextLine();
-
-                        try {
-                            Account cuenta = controller.login(username, password);
-                            if (cuenta.isAdmin()) {
-                                controller.showAdmMenu();
-                            } else {
-                                controller.showUserMenu();
-                            }
-                        } catch (AccountException e) {
-                            System.out.println("Error al iniciar sesión: " + e.getMessage());
-                        }
-                    }
-
-                    case 2 -> {
-
-                        try {
-
-                            controller.registerAccount(controller.collectRegistrationData(scanner, System.console()));
-                            System.out.println("¡Cuenta creada exitosamente!");
-                        } catch (AccountException e) {
-                            System.out.println("Error al registrar: " + e.getMessage());
-                        }
-                    }
-
-                    case 0 -> {
-                        System.out.println("Saliendo del sistema...");
-                        scanner.close();
-                        return;
-                    }
-
-                    default -> System.out.println("Opción inválida");
+    private void mostrarSustitucionesActivas(SubstituteController subController) {
+        clearScreen();
+        System.out.println("\n=== SUSTITUCIONES ACTIVAS ===");
+        
+        try {
+            List<Substitute> sustituciones = subController.getActiveSubstitutes();
+            
+            if (sustituciones.isEmpty()) {
+                System.out.println("No hay sustituciones activas en este momento.");
+            } else {
+                for (Substitute sub : sustituciones) {
+                    Account original = accountController.getById(sub.getOriginalTeacherId());
+                    Account sustituto = accountController.getById(sub.getSubstituteTeacherId());
+                    
+                    System.out.println("\nProfesor original: " + 
+                            (original != null ? original.getFullName() : "ID: " + sub.getOriginalTeacherId()));
+                    System.out.println("Sustituto: " + 
+                            (sustituto != null ? sustituto.getFullName() : "ID: " + sub.getSubstituteTeacherId()));
+                    System.out.println("Período: " + sub.getStartDate() + " hasta " + 
+                            (sub.getEndDate() != null ? sub.getEndDate() : "indefinido"));
+                    System.out.println("Estado: " + (sub.isActive() ? "ACTIVO" : "INACTIVO"));
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error crítico: " + e.getMessage());
-            Logger.getLogger(AccountMenuController.class.getName()).log(Level.SEVERE, "Error crítico", e);
+            System.err.println("Error al obtener sustituciones: " + e.getMessage());
         }
+        readLine("\nPresione Enter para continuar...");
+    }
+
+    private void finalizarSustitucion(SubstituteController subController) {
+        clearScreen();
+        System.out.println("\n=== FINALIZAR SUSTITUCIÓN ===");
+        
+        try {
+            List<Substitute> sustituciones = subController.getActiveSubstitutes();
+            
+            if (sustituciones.isEmpty()) {
+                System.out.println("No hay sustituciones activas para finalizar.");
+                return;
+            }
+            
+            System.out.println("\nSustituciones activas:");
+            for (int i = 0; i < sustituciones.size(); i++) {
+                Substitute sub = sustituciones.get(i);
+                Account original = accountController.getById(sub.getOriginalTeacherId());
+                Account sustituto = accountController.getById(sub.getSubstituteTeacherId());
+                
+                System.out.printf("%d. %s -> %s (desde %s hasta %s)%n", 
+                    i+1,
+                    original != null ? original.getUser() : sub.getOriginalTeacherId(),
+                    sustituto != null ? sustituto.getUser() : sub.getSubstituteTeacherId(),
+                    sub.getStartDate(),
+                    sub.getEndDate() != null ? sub.getEndDate() : "indefinido");
+            }
+            
+            int seleccion = readIntOption("\nSeleccione la sustitución a finalizar (0 para cancelar): ") - 1;
+            if (seleccion < 0 || seleccion >= sustituciones.size()) {
+                System.out.println("Operación cancelada.");
+                return;
+            }
+            
+            Substitute sub = sustituciones.get(seleccion);
+            
+            String confirmacion = readLine("\n¿Confirmar finalización de la sustitución? (S/N): ").toUpperCase();
+            if (confirmacion.equals("S")) {
+                subController.endSubstitution(sub.getId());
+                System.out.println("Sustitución finalizada exitosamente.");
+            } else {
+                System.out.println("Operación cancelada.");
+            }
+        } catch (Exception e) {
+            System.err.println("Error al finalizar sustitución: " + e.getMessage());
+        }
+        readLine("\nPresione Enter para continuar...");
     }
 }

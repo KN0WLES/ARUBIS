@@ -4,7 +4,6 @@ import unicorn.controller.*;
 import unicorn.exceptions.*;
 import unicorn.interfaces.*;
 import unicorn.model.*;
-import unicorn.util.*;
 import java.util.*;
 /**
  * Clase que representa el controlador de menú para preguntas frecuentes.
@@ -25,10 +24,9 @@ import java.util.*;
  * @see FaQ
  * @see Account
  */
-public class FaQMenuController {
+public class FaQMenuController extends BaseMenuController{
     private FaQController faqController;
     private final Account account;
-    private final Scanner scanner;
 
     public FaQMenuController(Account account) throws FaQException{
         FaQ prototype = new FaQ();
@@ -41,11 +39,18 @@ public class FaQMenuController {
             System.err.println("Error al inicializar FaQController: " + e.getMessage());
             this.faqController = null;
         }
-        
-        this.scanner = new Scanner(System.in);
     }
 
-    public void showUserMenu() {
+    @Override
+    public void showMenu() {
+        if (account != null && account.isAdmin()) {
+            showAdminMenu();
+        } else {
+            showUserMenu();
+        }
+    }
+
+    private void showUserMenu() {
         int option;
         do {
             mostrarMensajeCentrado("==== SISTEMA DE GESTIÓN DE PREGUNTAS FRECUENTES ====");
@@ -53,9 +58,9 @@ public class FaQMenuController {
             System.out.println("2. Buscar pregunta por ID");
             System.out.println("3. Hacer una pregunta");
             System.out.println("0. Volver al menú principal");
-            
+
             option = readIntOption("Seleccione una opción: ");
-            
+
             try {
                 switch (option) {
                     case 0 -> System.out.println("Volviendo al menú principal...");
@@ -64,13 +69,13 @@ public class FaQMenuController {
                     case 3 -> hacerPreguntaMenu();
                     default -> System.out.println("Opción inválida. Por favor intente de nuevo.");
                 }
-            } catch (Exception e) {
+            } catch (FaQException e) {
                 System.out.println("Error: " + e.getMessage());
             }
         } while (option != 0);
     }
 
-    public void showAdminMenu() {
+    private void showAdminMenu() {
         int option = -1;
         do {
             try {
@@ -92,9 +97,9 @@ public class FaQMenuController {
             System.out.println("4. Actualizar pregunta frecuente");
             System.out.println("5. Eliminar pregunta frecuente");
             System.out.println("0. Volver al menú principal");
-            
+
             option = readIntOption("Seleccione una opción: ");
-            
+
             try {
                 switch (option) {
                     case 0 -> System.out.println("Volviendo al menú principal...");
@@ -105,166 +110,162 @@ public class FaQMenuController {
                     case 5 -> deleteFaqMenu();
                     default -> System.out.println("Opción inválida. Por favor intente de nuevo.");
                 }
-            } catch (Exception e) {
+            } catch (FaQException e) {
                 System.out.println("Error: " + e.getMessage());
             }
         } while (option != 0);
     }
 
-    private void showAllFaqsMenu() {
+    private void showAllFaqsMenu() throws FaQException {
         mostrarMensajeCentrado("==== LISTADO DE TODAS LAS PREGUNTAS FRECUENTES ====");
-        try {
-            List<FaQ> faqs = faqController.getAllFaqs();
-            if (faqs.isEmpty()) {
-                System.out.println("No hay preguntas frecuentes registradas.");
-                return;
-            }
 
-            for (FaQ faq : faqs) {
-                displayFaqDetails(faq);
-                System.out.println("=".repeat(80));
-            }
+        List<FaQ> faqs = faqController.getAllFaqs();
+        if (faqs.isEmpty()) {
+            System.out.println("No hay preguntas frecuentes registradas.");
+            return;
+        }
 
-        } catch (FaQException e) {
-            System.out.println("Error: " + e.getMessage());
+        for (FaQ faq : faqs) {
+            displayFaqDetails(faq);
+            System.out.println("=".repeat(80));
         }
     }
 
-    private void findFaqByIdMenu() {
+    private void findFaqByIdMenu() throws FaQException {
         mostrarMensajeCentrado("==== BUSCAR PREGUNTA POR ID ====");
         System.out.print("ID de la pregunta: ");
         String id = scanner.nextLine();
-        
-        try {
-            FaQ faq = faqController.getFaqById(id);
-            displayFaqDetails(faq);
-        } catch (FaQException e) {
-            System.out.println("Error: " + e.getMessage());
-        }
+
+        FaQ faq = faqController.getFaqById(id);
+        displayFaqDetails(faq);
     }
 
-    private void addFaqMenu() {
+    private void addFaqMenu() throws FaQException {
         mostrarMensajeCentrado("==== AÑADIR NUEVA PREGUNTA FRECUENTE ====");
         System.out.print("Pregunta: ");
         String pregunta = scanner.nextLine();
         System.out.print("Respuesta: ");
         String respuesta = scanner.nextLine();
-        
+
         try {
-            FaQ newFaq = new FaQ(pregunta, respuesta);
+            FaQ newFaq = new FaQ(pregunta, respuesta, account.getUser());
             faqController.addFaq(newFaq);
             System.out.println("Pregunta frecuente añadida exitosamente.");
             System.out.println("ID asignado: " + newFaq.getId());
         } catch (FaQException e) {
             System.out.println("Error: " + e.getMessage());
+            throw e; // Re-lanza la excepción para que el menú principal la capture
         }
     }
 
-    private void updateFaqMenu() {
+    private void updateFaqMenu() throws FaQException {
         mostrarMensajeCentrado("==== ACTUALIZAR PREGUNTA FRECUENTE ====");
         System.out.print("ID de la pregunta a actualizar: ");
         String id = scanner.nextLine();
-        
+
         try {
             FaQ faq = faqController.getFaqById(id);
             displayFaqDetails(faq);
-            
+
             System.out.println("\nActualizar información:");
             System.out.print("Nueva pregunta (deje en blanco para mantener la actual): ");
             String newPregunta = scanner.nextLine();
             if (!newPregunta.isEmpty()) {
                 faq.setPregunta(newPregunta);
             }
-            
+
             System.out.print("Nueva respuesta (deje en blanco para mantener la actual): ");
             String newRespuesta = scanner.nextLine();
             if (!newRespuesta.isEmpty()) {
-                faq.setRespuesta(newRespuesta);
+                faq.setRespuesta(newRespuesta, account.getUser());
             }
-            
-            faqController.updateFaq(faq);
+
+            faqController.updateFaq(faq, account.getUser());
             System.out.println("Pregunta frecuente actualizada exitosamente.");
         } catch (FaQException e) {
             System.out.println("Error: " + e.getMessage());
+            throw e; // Re-lanza la excepción para que el menú principal la capture
         }
     }
 
-    private void hacerPreguntaMenu() {
+    private void hacerPreguntaMenu() throws FaQException {
         mostrarMensajeCentrado("==== HACER UNA PREGUNTA ====");
         System.out.print("Escriba su pregunta: ");
         String pregunta = scanner.nextLine();
-        
-        try {
 
-            FaQ newFaq = new FaQ(pregunta, "Solicitud pendiente de respuesta");
+        try {
+            FaQ newFaq = new FaQ(pregunta, "Solicitud pendiente de respuesta",null);
             newFaq.setPendiente(true);
             faqController.addFaq(newFaq);
             System.out.println("Pregunta enviada exitosamente. Un administrador la responderá pronto.");
             System.out.println("ID de seguimiento: " + newFaq.getId());
         } catch (FaQException e) {
             System.out.println("Error: " + e.getMessage());
+            throw e; // Re-lanza la excepción para que el menú principal la capture
         }
     }
 
-    private void responderPreguntasPendientes() {
+    private void responderPreguntasPendientes() throws FaQException {
         try {
             List<FaQ> pendientes = faqController.getFaqByPending();
             for (FaQ faq : pendientes) {
                 mostrarMensajeCentrado("==== PREGUNTA PENDIENTE ====");
                 displayFaqDetails(faq);
-                
+
                 System.out.print("Escriba la respuesta: ");
                 String respuesta = scanner.nextLine();
-                
+
                 if (!respuesta.trim().isEmpty()) {
-                    faq.setRespuesta(respuesta);
+                    faq.setRespuesta(respuesta, account.getUser());
                     faq.setPendiente(false);
-                    faqController.updateFaq(faq);
+                    faqController.updateFaq(faq, account.getUser());
                     System.out.println("Respuesta guardada exitosamente.");
                 }
             }
         } catch (FaQException e) {
             System.out.println("Error: " + e.getMessage());
+            throw e; // Re-lanza la excepción para que el menú principal la capture
         }
     }
 
     private void displayFaqDetails(FaQ faq) {
         int width = 80;
         String border = "+" + "-".repeat(width - 2) + "+";
-        
+
         System.out.println(border);
-        System.out.printf("| %-" + (width-4) + "s |%n", "ID: " + faq.getId());
+        System.out.printf("| %-" + (width - 4) + "s |%n", "ID: " + faq.getId());
         System.out.println(border);
-        
+
         System.out.println("| PREGUNTA:");
         String[] preguntaLines = wordWrap(faq.getPregunta(), width - 4);
         for (String line : preguntaLines) {
-            System.out.printf("| %-" + (width-4) + "s |%n", line);
+            System.out.printf("| %-" + (width - 4) + "s |%n", line);
         }
-        
+
         System.out.println(border);
         System.out.println("| RESPUESTA:");
         String[] respuestaLines = wordWrap(faq.getRespuesta(), width - 4);
         for (String line : respuestaLines) {
-            System.out.printf("| %-" + (width-4) + "s |%n", line);
+            System.out.printf("| %-" + (width - 4) + "s |%n", line);
         }
-        
+
         System.out.println(border);
-        System.out.printf("| %-" + (width-4) + "s |%n", 
-            "Estado: " + (faq.isPendiente() ? "Pendiente" : "Respondida"));
+        System.out.printf("| %-" + (width - 4) + "s |%n",
+                "Estado: " + (faq.isPendiente() ? "Pendiente" : "Respondida"));
         System.out.println(border);
     }
 
     private String[] wordWrap(String text, int width) {
-        if (text == null) return new String[]{"N/A"};
-        
+        if (text == null) return new String[] { "N/A" };
+
         String[] words = text.split("\\s+");
         List<String> lines = new ArrayList<>();
         StringBuilder currentLine = new StringBuilder();
 
         for (String word : words) {
             if (currentLine.length() + word.length() + 1 <= width) {
-                if (currentLine.length() > 0) currentLine.append(" ");
+                if (currentLine.length() > 0)
+                    currentLine.append(" ");
                 currentLine.append(word);
             } else {
                 lines.add(currentLine.toString());
@@ -274,22 +275,22 @@ public class FaQMenuController {
         if (currentLine.length() > 0) {
             lines.add(currentLine.toString());
         }
-        
+
         return lines.toArray(new String[0]);
     }
 
-    private void deleteFaqMenu() {
+    private void deleteFaqMenu() throws FaQException {
         mostrarMensajeCentrado("==== ELIMINAR PREGUNTA FRECUENTE ====");
         System.out.print("ID de la pregunta a eliminar: ");
         String id = scanner.nextLine();
-        
+
         try {
             FaQ faq = faqController.getFaqById(id);
             displayFaqDetails(faq);
-            
+
             System.out.print("¿Está seguro de que desea eliminar esta pregunta frecuente? (s/n): ");
             String response = scanner.nextLine();
-            
+
             if (response.equalsIgnoreCase("s")) {
                 faqController.deleteFaq(id);
                 System.out.println("Pregunta frecuente eliminada exitosamente.");
@@ -298,47 +299,7 @@ public class FaQMenuController {
             }
         } catch (FaQException e) {
             System.out.println("Error: " + e.getMessage());
-        }
-    }
-
-    private int readIntOption(String message) {
-        while (true) {
-            try {
-                System.out.print(message);
-                return Integer.parseInt(scanner.nextLine());
-            } catch (NumberFormatException e) {
-                System.out.println("Por favor, ingrese un número válido.");
-            }
-        }
-    }
-
-    public void mostrarMensajeCentrado(String mensaje) {
-        int longitudMaxima = 73;
-        int longitudMensaje = mensaje.length();
-        int espaciosIzquierda = (longitudMaxima - longitudMensaje) / 2;
-        int espaciosDerecha = longitudMaxima - longitudMensaje - espaciosIzquierda;
-        String lineaCentrada = "=".repeat(espaciosIzquierda) + mensaje + "=".repeat(espaciosDerecha);
-        System.out.println(lineaCentrada);
-    }
-
-    public static void main(String[] args) {
-        try {
-            FaQMenuController menuController = new FaQMenuController(null);
-            Scanner sc = new Scanner(System.in);
-            
-            System.out.print("¿Iniciar menú como administrador? (s/n): ");
-            String input = sc.nextLine().toLowerCase();
-            boolean isAdmin = input.equals("s") || input.equals("si");
-            
-            if (isAdmin) {
-                menuController.showAdminMenu();
-            } else {
-                menuController.showUserMenu();
-            }
-            
-            sc.close();
-        } catch (Exception e) {
-            System.err.println("Error al inicializar el menú: " + e.getMessage());
+            throw e; // Re-lanza la excepción para que el menú principal la capture
         }
     }
 }

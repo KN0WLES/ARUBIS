@@ -59,4 +59,8 @@ public class AccountException extends Exception {
     public static AccountException restriccionAdmin() {
         return new AccountException("No se puede modificar/eliminar una cuenta admin");
     }
+
+    public static AccountException accountPending() {
+        return new AccountException("La cuenta está pendiente de aprobación");
+    }
 }

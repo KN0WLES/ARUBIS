@@ -66,6 +66,18 @@ public abstract class Base<T> implements Serializable {
     }
 
     /**
+     * Escapa los caracteres especiales en una cadena para su uso en serialización.
+     * Reemplaza el carácter '|' por '\|' para evitar conflictos en la representación de texto.
+     * Si el valor es null, devuelve "null" como cadena.
+     *
+     * @param value La cadena a escapar
+     * @return La cadena escapada o "null" si el valor es null
+     */
+    protected String escapeForSerialization(String value) {
+        return value != null ? value.replace("|", "\\|") : "null";
+    }
+
+    /**
      * Serializa el objeto a una representación en formato texto.
      * 
      * @return Cadena que representa el estado del objeto para almacenamiento

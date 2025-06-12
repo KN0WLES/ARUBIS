@@ -3,7 +3,6 @@ package unicorn.controller;
 import unicorn.model.*;
 import unicorn.exceptions.*;
 import unicorn.interfaces.*;
-import unicorn.interfaces.*;
 import unicorn.util.*;
 
 import java.time.LocalDate;
@@ -43,10 +42,12 @@ public class AccountController implements IAccount {
     
     private final IFile<Account> fileHandler;
     private final IFile<Substitute> substituteFile;
+    private final INews newsController;
+    private final IFile<FaQ> faqFile;
     private final Map<TipoCuenta, String> filePaths;
     private Map<String, Account> accounts;
 
-    public AccountController(IFile<Account> fileHandler, IFile<Substitute> substituteFile) throws AccountException {
+    public AccountController(IFile<Account> fileHandler, IFile<Substitute> substituteFile, INews newsController,  IFile<FaQ> faqFile) throws AccountException {
         this.fileHandler = fileHandler;
         this.substituteFile = substituteFile;
         this.filePaths = new HashMap<>();
@@ -56,6 +57,10 @@ public class AccountController implements IAccount {
         this.filePaths.put(TipoCuenta.PROFESOR,   "src/main/java/unicorn/dto/accounts_profesor.txt");
 
         this.accounts = new HashMap<>(); // Inicializamos el HashMap
+
+        this.newsController = newsController;
+        this.faqFile = faqFile;
+
         try {
             // Asegurarse de que todos los archivos existan y cargar datos de cada uno
             for (Map.Entry<TipoCuenta, String> entry : filePaths.entrySet()) {
@@ -68,6 +73,7 @@ public class AccountController implements IAccount {
             }
             initializeDefaultAdmin();
             initializeDefaultPrf();
+            createDefaultContactFAQ();
         } catch (FileException e) {
             this.accounts = new HashMap<>(); // En caso de error, inicializamos un mapa vacío
             System.err.println("Error al cargar cuentas, iniciando con lista vacía: " + e.getMessage());
@@ -106,6 +112,45 @@ public class AccountController implements IAccount {
 
         // Crear archivo de horarios para el usuario
         createUserScheduleFile(account); //
+        if (account.isEstudiante()) {
+            try {
+                newsController.sendUserNews(
+            "Tu cuenta está en revisión. Contacta a un administrador si no se activa en 24h.",
+                    TipoNews.SISTEMA,
+                    account.getId()
+            );
+            } catch (NewsException e) {
+                System.err.println("Error al enviar notificación: " + e.getMessage());
+            }
+        }
+    }
+
+    public void approveStudentAccount(String adminUsername, String studentId) throws AccountException {
+        Account admin = getByUsername(adminUsername);
+        Account student = getById(studentId);
+
+        if (admin == null || !admin.isAdmin()) {
+            throw new AccountException("Solo administradores pueden aprobar cuentas");
+        }
+        if (student == null || !student.isEstudiante()) {
+            throw new AccountException("ID de estudiante inválido");
+        }
+        if (student.getStatus() == AccountStatus.ACTIVO) {
+            throw new AccountException("La cuenta ya está activa");
+        }
+
+        student.aprobarCuenta();
+        saveChanges();
+
+        try {
+            newsController.sendUserNews(
+                    "¡Tu cuenta ha sido activada! Ya puedes iniciar sesión.",
+                    TipoNews.SISTEMA,
+                    studentId
+            );
+        } catch (NewsException e) {
+            throw new AccountException("Error al notificar al estudiante: " + e.getMessage());
+        }
     }
 
     private void createUserScheduleFile(Account account) throws AccountException {
@@ -148,7 +193,7 @@ public class AccountController implements IAccount {
         Account account = getByUsername(username);
         
         if (account == null) throw new AccountException("Usuario no encontrado");
-        
+        if (account.getStatus() != AccountStatus.ACTIVO) throw new AccountException("Cuenta pendiente de activación");
         if (!account.verifyPassword(password)) throw new AccountException("Contraseña incorrecta");
         
         return account;
@@ -512,6 +557,15 @@ public class AccountController implements IAccount {
 
     private String generateProfessorEmail(String nombre1, String nombre2, String apellido1, String apellido2) {
         return generateProfessorUsername(nombre1, nombre2, apellido1, apellido2) + "@prf.umss.edu";
+    }
+
+    private void createDefaultContactFAQ() {
+        try {
+            FaQController faqController = new FaQController(faqFile);
+            faqController.createDefaultContactFAQ();
+        } catch (Exception e) {
+            System.err.println("Error al crear FAQ de contacto: " + e.getMessage());
+        }
     }
 
     @Override

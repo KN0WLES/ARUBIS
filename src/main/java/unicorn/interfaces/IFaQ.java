@@ -83,7 +83,7 @@ public interface IFaQ {
      * @param faq Pregunta frecuente con los datos actualizados.
      * @throws FaQException Si la FAQ no existe o los datos son inválidos.
      */
-    void updateFaq(FaQ faq) throws FaQException;
+    void updateFaq(FaQ faq,String userResponse) throws FaQException;
     
     /**
      * Elimina una pregunta frecuente.

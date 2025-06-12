@@ -1,5 +1,7 @@
 package unicorn.model;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 /**
@@ -23,6 +25,8 @@ public class FaQ extends Base<FaQ> {
     private String pregunta;
     private String respuesta;
     private boolean pendiente;
+    private String responderID;
+    private LocalDateTime fechaRespuesta;
 
     /**
      * Constructor vacío para serialización.
@@ -36,7 +40,7 @@ public class FaQ extends Base<FaQ> {
      * @param respuesta Texto de la respuesta
      * @throws IllegalArgumentException Si la pregunta o respuesta están vacías
      */
-    public FaQ(String pregunta, String respuesta) {
+    public FaQ(String pregunta, String respuesta, String respondedorId) {
         if (pregunta == null || pregunta.trim().isEmpty())
             throw new IllegalArgumentException("La pregunta no puede estar vacía");
         if (respuesta == null || respuesta.trim().isEmpty())
@@ -46,6 +50,8 @@ public class FaQ extends Base<FaQ> {
         this.pregunta = pregunta;
         this.respuesta = respuesta;
         this.pendiente = false;
+        this.fechaRespuesta = LocalDateTime.now();
+        this.responderID = respondedorId;
     }
     
     /**
@@ -62,6 +68,8 @@ public class FaQ extends Base<FaQ> {
         this.respuesta = "Solicitud pendiente de respuesta";
         this.pendiente = true;
         this.id = UUID.randomUUID().toString();
+        this.responderID = null;
+        this.fechaRespuesta = null;
     }
 
     /**
@@ -106,30 +114,41 @@ public class FaQ extends Base<FaQ> {
      * @param respuesta Nuevo texto de la respuesta
      * @throws IllegalArgumentException Si la respuesta está vacía
      */
-    public void setRespuesta(String respuesta) {
-        if (respuesta == null || respuesta.trim().isEmpty())
-            throw new IllegalArgumentException("La respuesta no puede estar vacía");
+    public void setRespuesta(String respuesta, String respondedorId) {
         this.respuesta = respuesta;
+        this.responderID = respondedorId;
+        this.fechaRespuesta = LocalDateTime.now();
+        this.pendiente = false;
     }
 
-    /**
-     * Modifica el estado de pendiente de la pregunta.
-     * 
-     * @param estado Nuevo estado: true para pendiente, false para respondida
-     */
+
+        /**
+         * Modifica el estado de pendiente de la pregunta.
+         *
+         * @param estado Nuevo estado: true para pendiente, false para respondida
+         */
     public void setPendiente(boolean estado) { this.pendiente = estado; }
 
     @Override
     public String toFile() {
-        return String.join("|", id, pregunta, respuesta, String.valueOf(pendiente));
+        DateTimeFormatter fmt = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        return String.join("|",
+                escapeForSerialization(id),
+                escapeForSerialization(pregunta),
+                escapeForSerialization(respuesta),
+                escapeForSerialization(String.valueOf(pendiente)),
+                escapeForSerialization(responderID),
+                escapeForSerialization(fechaRespuesta.format(fmt))
+                );
     }
 
     @Override
     public FaQ fromFile(String line) {
         String[] parts = line.split("\\|");
-        FaQ faq = new FaQ(parts[1], parts[2]);
+        FaQ faq = new FaQ(parts[1], parts[2], parts[4]);
         faq.id = parts[0];
         faq.pendiente = Boolean.parseBoolean(parts[3]);
+        faq.fechaRespuesta = LocalDateTime.parse(parts[5]);
         return faq;
     }
 

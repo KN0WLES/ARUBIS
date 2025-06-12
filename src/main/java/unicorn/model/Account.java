@@ -24,6 +24,7 @@ public class Account extends Base<Account> {
     private List<RoleHistory> roleHistory;
     private String substituteId;
     private String alternateEmail;
+    private AccountStatus status;
 
     public Account() {
         this.id = UUID.randomUUID().toString();
@@ -31,7 +32,7 @@ public class Account extends Base<Account> {
     }
 
     public Account(String nombre, String apellido, String phone, String email, String user, String plainPassword,
-                   TipoCuenta tipo) {
+                    TipoCuenta tipo) {
         this();
         this.nombre = nombre;
         this.apellido = apellido;
@@ -40,6 +41,7 @@ public class Account extends Base<Account> {
         this.user = user;
         this.hashedPassword = PasswordUtil.hashPassword(plainPassword);
         this.tipoCuenta = tipo;
+        this.status = (tipo == TipoCuenta.ESTUDIANTE) ? AccountStatus.PENDIENTE : AccountStatus.ACTIVO;
     }
 
     public static class RoleHistory {
@@ -73,7 +75,7 @@ public class Account extends Base<Account> {
         this.alternateEmail = this.email;
         this.email = this.email.replace("@prf.umss.edu", "@adm.umss.edu");
         this.tipoCuenta = TipoCuenta.ADMIN;
-        this.substituteId = substituteId;
+        this.setSubstituteId(substituteId);
         addRoleHistory(TipoCuenta.ADMIN, startDate, endDate);
 
         return new Substitute(this.id, substituteId, startDate, endDate);
@@ -94,7 +96,14 @@ public class Account extends Base<Account> {
     }
 
     public void addRoleHistory(TipoCuenta newRole, LocalDate startDate, LocalDate endDate) {
-        if (roleHistory == null) roleHistory = new ArrayList<>();
+        // Verificar solapamiento
+        boolean hasOverlap = roleHistory.stream().anyMatch(r ->
+                (endDate == null || !r.getStartDate().isAfter(endDate)) &&
+                        (r.getEndDate() == null || !startDate.isAfter(r.getEndDate())));
+
+        if (hasOverlap) {
+            throw new IllegalStateException("El nuevo rol se solapa con un rol existente");
+        }
         roleHistory.add(new RoleHistory(newRole, startDate, endDate));
     }
 
@@ -124,8 +133,15 @@ public class Account extends Base<Account> {
     public void setId(String id) { this.id = id; }
     public void setNombre(String nombre) { this.nombre = nombre; }
     public void setApellido(String apellido) { this.apellido = apellido; }
-    public void setSubstituteId(String substituteId) { this.substituteId = substituteId; }
-    public void setAlternateEmail(String alternateEmail) { this.alternateEmail = alternateEmail; }
+    public void setSubstituteId(String substituteId) {
+        if(!isAdmin()) throw new IllegalStateException("Solo administradores pueden asignar un sustituto.");
+
+        this.substituteId = substituteId;
+    }
+    public void setAlternateEmail(String alternateEmail) {
+        if (!isProfesor() && !isAdmin()) throw new IllegalStateException("Solo administradores y profesores pueden asignar un email alternativo.");
+        this.alternateEmail = alternateEmail;
+    }
 
     public void setPhone(String phone) {
         if (!AccountValidation.validatePhone(phone))
@@ -145,13 +161,9 @@ public class Account extends Base<Account> {
         this.hashedPassword = PasswordUtil.hashPassword(newPassword);
     }
 
-    public void setHashedPassword(String hashedPassword) {
-        this.hashedPassword = hashedPassword;
-    }
+    public void setHashedPassword(String hashedPassword) { this.hashedPassword = hashedPassword; }
 
-    public void setTipoCuenta(TipoCuenta tipoCuenta) {
-        this.tipoCuenta = tipoCuenta;
-    }
+    public void setTipoCuenta(TipoCuenta tipoCuenta) { this.tipoCuenta = tipoCuenta; }
 
     public void setEmail(String email) {
         if (!AccountValidation.validateEmail(email))
@@ -167,11 +179,9 @@ public class Account extends Base<Account> {
         return PasswordUtil.verifyPassword(inputPassword, hashedPassword);
     }
 
-    // Métodos auxiliares
-    private String generateUsername(String nombre, String apellido) {
-        String base = (nombre.charAt(0) + apellido).toLowerCase();
-        return base.length() >= 4 ? base : base + "123".substring(0, 4 - base.length());
-    }
+    public void aprobarCuenta(){ this.status = AccountStatus.ACTIVO;}
+    public void rechazarCuenta(){ this.status = AccountStatus.RECHAZADO;}
+    public AccountStatus getStatus() { return status; }
 
     private void setEmailBasedOnRole(String email, TipoCuenta tipo) {
         if (!AccountValidation.validateRoleEmail(email, tipo)) {
@@ -184,7 +194,12 @@ public class Account extends Base<Account> {
     @Override
     public String toFile() {
         return String.join("|",
-                id, nombre, apellido, phone, email, user,
+                escapeForSerialization(id),
+                escapeForSerialization(nombre),
+                escapeForSerialization(apellido),
+                escapeForSerialization(phone),
+                escapeForSerialization(email),
+                escapeForSerialization(user),
                 hashedPassword, tipoCuenta.name(),
                 substituteId != null ? substituteId : "null",
                 alternateEmail != null ? alternateEmail : "null"

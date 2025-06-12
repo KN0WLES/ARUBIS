@@ -30,7 +30,7 @@ public class Substitute extends Base<Substitute> {
     }
 
     public Substitute(String originalTeacherId, String substituteTeacherId,
-                      LocalDate startDate, LocalDate endDate) {
+                        LocalDate startDate, LocalDate endDate) {
         this();
         this.originalTeacherId = originalTeacherId;
         this.substituteTeacherId = substituteTeacherId;
@@ -55,7 +55,12 @@ public class Substitute extends Base<Substitute> {
     public void setOriginalTeacherId(String originalTeacherId) { this.originalTeacherId = originalTeacherId; }
     public void setSubstituteTeacherId(String substituteTeacherId) { this.substituteTeacherId = substituteTeacherId; }
     public void setStartDate(LocalDate startDate) { this.startDate = startDate; }
-    public void setEndDate(LocalDate endDate) { this.endDate = endDate; }
+    public void setEndDate(LocalDate endDate) {
+        if (endDate != null && endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException("La fecha fin no puede ser anterior a la fecha inicio");
+        }
+        this.endDate = endDate;
+    }
     public void setActive(boolean active) { this.active = active; }
     public void setScheduleBackupPath(String scheduleBackupPath) { this.scheduleBackupPath = scheduleBackupPath; }
 

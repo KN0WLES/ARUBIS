@@ -17,16 +17,19 @@ public class SubjectMenuController {
     private Scanner scanner;
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    public SubjectMenuController(Account account) throws SubjectException, ScheduleException, AccountException{
+    public SubjectMenuController(Account account) throws SubjectException, ScheduleException, AccountException, NewsException {
         Subject prototype = new Subject();
         IFile<Subject> fileHandler = new FileHandler<>(prototype);
 
         this.account = account;
         Account accountPrototype = new Account();
         Substitute substitutePrototype = new Substitute();
-        IFile<Account> accountFileHandler = new FileHandler<>(accountPrototype);
-        IFile<Substitute> substituteFileHandler = new FileHandler<>(substitutePrototype);
-        this.accountController = new AccountController(accountFileHandler, substituteFileHandler);
+        IFile<Account> accountFileHandler = new FileHandler<>(new Account());
+        IFile<Substitute> substituteFileHandler = new FileHandler<>(new Substitute());
+        IFile<FaQ> faqFileHandler = new FileHandler<>(new FaQ());
+        INews newsController = new NewsController(new FileHandler<>(new News()), account != null ? account.getId() : null);
+
+        this.accountController = new AccountController(accountFileHandler, substituteFileHandler, newsController, faqFileHandler);
         try {
             this.Subjectcontroller = new SubjectController(fileHandler);
         } catch (Exception e) {
