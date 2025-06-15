@@ -1,3 +1,4 @@
 # filepath: d:\PROGRAMS METODOS\ARUBlS\.gitignore
 .idea/
 target/
+dto/
