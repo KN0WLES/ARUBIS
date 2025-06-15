@@ -37,7 +37,7 @@ import java.util.List;
 public class FaQController implements IFaQ {
     
     private final IFile<FaQ> fileHandler;
-    private final String filePath = "src/main/java/unicorn/arubis/dto/faqs.txt";
+    private final String filePath = "src/main/java/unicorn/dto/faqs.txt";
     private List<FaQ> faqs;
 
     public FaQController(IFile<FaQ> fileHandler) throws FaQException{
@@ -48,6 +48,7 @@ public class FaQController implements IFaQ {
 
             if (this.faqs == null || this.faqs.isEmpty()) {
                 this.faqs = new ArrayList<>();
+                createDefaultContactFAQ();
                 saveChanges();
             }
         } catch (FileException e) {
@@ -116,8 +117,7 @@ public class FaQController implements IFaQ {
         FaQ default2FaQ = new FaQ("Contactos","Teléfono: 4258813 Whatsapp: 65486014 Correo: info@unicorn.com.bo","default");
         FaQ contactFAQ = new FaQ(
                 "¿Cómo contacto a un administrador para activar mi cuenta?",
-                "Envía un email a activaciones@adm.umss.edu con tu número de matrícula.","default"
-        );
+                "Envía un email a activaciones@adm.umss.edu con tu número de matrícula.","default");
         this.faqs.add(default1FaQ);
         this.faqs.add(default2FaQ);
         this.faqs.add(contactFAQ);

@@ -21,32 +21,62 @@ public class MainMenuController extends BaseMenuController {
     private Logo logo;
     private Scanner scanner;
 
-    public MainMenuController() {
+    public MainMenuController() throws FaQException, AccountException, SubjectException, RoomException, NewsException, ScheduleException {
         this.scanner = new Scanner(System.in);
         this.logo = new Logo();
-        initializeControllers();
-        this.accountMenu = new AccountMenuController(accountController, null);
+
+        // Inicializar accountController primero
+        initializeAccountController();
+        run();
     }
+
+    private void initializeAccountController() throws FaQException, AccountException {
+        try {
+            // Inicializar controladores base
+            IFile<Account> accountFileHandler = new FileHandler<>(new Account());
+            IFile<Substitute> substituteFileHandler = new FileHandler<>(new Substitute());
+            IFile<FaQ> faqFileHandler = new FileHandler<>(new FaQ());
+            INews newsController = new NewsController(new FileHandler<>(new News()), "system");
+
+            this.accountController = new AccountController(accountFileHandler, substituteFileHandler, newsController, faqFileHandler);
+        } catch (Exception e) {
+            System.err.println("Error initializing account controller: " + e.getMessage());
+            throw new AccountException("Failed to initialize system: " + e.getMessage());
+        }
+    }
+
+    private void logo (){
+        //Mostrar animación de inicio
+        //logo.loadingEffect();
+        //logo.mostrarLogo();
+        //logo.details();
+    }
+
+    public void run() throws FaQException, AccountException, SubjectException, RoomException, NewsException, ScheduleException {
+        logo();
+        waitForValidLogin(); // Fase 1
+        initializeControllers(); // Fase 2
+        showMainMenu();
+    }
+
+    private void waitForValidLogin() throws FaQException, AccountException, SubjectException, RoomException, NewsException, ScheduleException {
+        while (currentAccount == null) {
+            showLoginMenu();
+        }
+    }
+
 
     private void initializeControllers() {
         try {
-            // Mostrar animación de inicio
-            logo.loadingEffect();
-            logo.mostrarLogo();
-            logo.details();
-            
-
             // Inicializar controladores
             IFile<Account> accountFileHandler = new FileHandler<>(new Account());
             IFile<Substitute> substituteFileHandler = new FileHandler<>(new Substitute());
             IFile<FaQ> faqFileHandler = new FileHandler<>(new FaQ());
-            INews newsController = new NewsController(new FileHandler<>(new News()), null);
+            INews newsController = new NewsController(new FileHandler<>(new News()), currentAccount.getUser());
 
             this.accountController = new AccountController(accountFileHandler, substituteFileHandler, newsController, faqFileHandler);
 
-            // Mostrar menú de login
-            showLoginMenu();
-
+            this.accountMenu = new AccountMenuController(accountController, currentAccount);
         } catch (Exception e) {
             System.err.println("Error initializing system: " + e.getMessage());
             System.exit(1);
@@ -71,7 +101,6 @@ public class MainMenuController extends BaseMenuController {
     private void showLoginMenu()  throws AccountException, FaQException, NewsException, RoomException, ScheduleException, SubjectException{
         while (currentAccount == null) {
             clearScreen();
-            logo.mostrarLogo();
             mostrarMensajeCentrado(" SISTEMA DE GESTIÓN ACADÉMICA ");
             System.out.println("1. Iniciar sesión");
             System.out.println("2. Registrarse");
@@ -98,8 +127,8 @@ public class MainMenuController extends BaseMenuController {
             if (currentAccount.getTipoCuenta() == TipoCuenta.ADMIN) {
                 System.out.println("1. Mi Cuenta");
                 System.out.println("2. Gestión de Horarios");
-                System.out.println("3. Gestión de Profesores");
-                System.out.println("4. Gestión de Estudiantes");
+                System.out.println("3. Gestión de Cuentas");
+                //System.out.println("4. Gestión de Estudiantes");
                 System.out.println("5. Gestión de Aulas");
                 System.out.println("6. Gestión de Comunicados");
                 System.out.println("7. Ver todos los horarios");
@@ -135,16 +164,10 @@ public class MainMenuController extends BaseMenuController {
         try {
             if (currentAccount == null) return;
 
-            switch (option) {
-                case 1 -> accountMenu.showCommonMenu();
-                case 3 -> newsMenu.showMenu();
-                case 6 -> faqMenu.showMenu();
-                case 7, 8, 9 -> logout();
-                case 0 -> {
-                    System.out.println("¡Gracias por usar el sistema!");
-                    System.exit(0);
-                }
-                default -> System.out.println("Opción inválida");
+            switch (currentAccount.getTipoCuenta()) {
+                case ADMIN -> handleAdminMenu(option);
+                case PROFESOR -> handleProfesorMenu(option);
+                case ESTUDIANTE -> handleEstudianteMenu(option);
             }
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
@@ -152,43 +175,86 @@ public class MainMenuController extends BaseMenuController {
         }
     }
 
+    private void handleAdminMenu(int option) {
+        switch (option) {
+            case 1 -> accountMenu.showCommonMenu();
+            //case 2 -> scheduleMenu.showMenu();
+            case 3 -> accountMenu.showMenu();
+            //case 4 -> accountMenu.showMenu();
+            //case 5 -> roomMenu.showMenu();
+            case 6 -> newsMenu.showMenu();
+            //case 7 -> scheduleMenu.showAllSchedules();
+            case 8 -> faqMenu.showMenu();
+            case 9 -> logout();
+            case 0 -> {
+                System.out.println("¡Gracias por usar el sistema!");
+                System.exit(0);
+            }
+            default -> System.out.println("Opción inválida");
+        }
+    }
+
+    private void handleProfesorMenu(int option) {
+        switch (option) {
+            case 1 -> accountMenu.showCommonMenu();
+            //case 2 -> scheduleMenu.showTeacherSchedule();
+            //case 4 -> scheduleMenu.showScheduleChangeMenu();
+            case 5 -> newsMenu.showMenu();
+            case 6 -> faqMenu.showMenu();
+            case 7 -> logout();
+            case 0 -> {
+                System.out.println("¡Gracias por usar el sistema!");
+                System.exit(0);
+            }
+            default -> System.out.println("Opción inválida");
+        }
+    }
+
+    private void handleEstudianteMenu(int option) {
+        switch (option) {
+            case 1 -> accountMenu.showCommonMenu();
+            //case 2 -> scheduleMenu.showStudentSchedule();
+            //case 3 -> subjectMenu.showMenu();
+            case 4 -> accountMenu.showMenu();
+            //case 5 -> roomMenu.showAssignedRooms();
+            case 6 -> newsMenu.showMenu();
+            case 7 -> faqMenu.showMenu();
+            case 8 -> logout();
+            case 0 -> {
+                System.out.println("¡Gracias por usar el sistema!");
+                System.exit(0);
+            }
+            default -> System.out.println("Opción inválida");
+        }
+    }
+
     private void login()  throws AccountException, FaQException, NewsException, RoomException, ScheduleException, SubjectException{
         Console console = System.console();
-        if (console == null) {
-            System.out.println("AVISO: Para mayor seguridad, ejecute desde una terminal real (no desde un IDE)");
-            System.out.println("Continuando con entrada por Scanner...");
+        try {
+            String username, password;
 
-            System.out.print("Usuario: ");
-            String username = scanner.nextLine();
-
-            System.out.print("Contraseña: ");
-            String password = scanner.nextLine();
-
-            try {
-                currentAccount = accountController.login(username, password);
-                initializeUserMenus();
-                System.out.println("¡Bienvenido " + currentAccount.getNombre() + "!");
-                readLine("Presione Enter para continuar...");
-            } catch (AccountException e) {
-                System.out.println("Error: " + e.getMessage());
-                readLine("Presione Enter para continuar...");
-            }
-        } else {
-            try {
+            if (console == null) {
+                System.out.println("AVISO: Para mayor seguridad, ejecute desde una terminal real (no desde un IDE)");
+                System.out.println("Continuando con entrada por Scanner...");
+                
                 System.out.print("Usuario: ");
-                String username = console.readLine();
-
+                username = scanner.nextLine();
+                System.out.print("Contraseña: ");
+                password = scanner.nextLine();
+            } else {
+                System.out.print("Usuario: ");
+                username = console.readLine();
                 char[] pwdArray = console.readPassword("Contraseña: ");
-                String password = new String(pwdArray);
-
-                currentAccount = accountController.login(username, password);
-                initializeUserMenus();
-                System.out.println("¡Bienvenido " + currentAccount.getNombre() + "!");
-                readLine("Presione Enter para continuar...");
-            } catch (AccountException e) {
-                System.out.println("Error: " + e.getMessage());
-                readLine("Presione Enter para continuar...");
+                password = new String(pwdArray);
             }
+
+            currentAccount = accountController.login(username, password);
+            initializeUserMenus();
+            System.out.println("¡Bienvenido " + currentAccount.getNombre() + "!");
+            readLine("Presione Enter para continuar...");
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+            readLine("Presione Enter para continuar...");
         }
     }
 
@@ -205,9 +271,34 @@ public class MainMenuController extends BaseMenuController {
 
     private void register() {
         try {
-            Account newAccount = accountMenu.collectRegistrationData(scanner, System.console());
+            System.out.print("Nombre: ");
+            String nombre = scanner.nextLine();
 
-            if (!AccountValidation.validateRoleEmail(newAccount.getEmail(), TipoCuenta.ESTUDIANTE)) {
+            System.out.print("Apellido: ");
+            String apellido = scanner.nextLine();
+
+            System.out.print("Teléfono: ");
+            String phone = scanner.nextLine();
+
+            System.out.print("Email: ");
+            String email = scanner.nextLine();
+
+            System.out.print("Usuario: ");
+            String username = scanner.nextLine();
+
+            String password;
+            Console console = System.console();
+            if (console != null) {
+                char[] pwdArray = console.readPassword("Contraseña: ");
+                password = new String(pwdArray);
+            } else {
+                System.out.print("Contraseña: ");
+                password = scanner.nextLine();
+            }
+
+            Account newAccount = new Account(nombre, apellido, phone, email, username, password, TipoCuenta.ESTUDIANTE);
+
+            if (!AccountValidation.validateRoleEmail(email, TipoCuenta.ESTUDIANTE)) {
                 System.out.println("Error: Email debe terminar en @est.umss.edu");
                 return;
             }
@@ -216,8 +307,6 @@ public class MainMenuController extends BaseMenuController {
             System.out.println("¡Registro exitoso! Por favor inicie sesión.");
         } catch (AccountException e) {
             System.out.println("Error: " + e.getMessage());
-        } catch (IllegalArgumentException e) {
-            System.out.println("Error en los datos: " + e.getMessage());
         }
         readLine("Presione Enter para continuar...");
     }
@@ -228,7 +317,7 @@ public class MainMenuController extends BaseMenuController {
         readLine("Presione Enter para continuar...");
     }
 
-    public static void main(String[] args) {
-        new MainMenuController().showMenu();
+    public static void main(String[] args) throws FaQException, AccountException, SubjectException, RoomException, NewsException, ScheduleException {
+        new MainMenuController();
     }
 }

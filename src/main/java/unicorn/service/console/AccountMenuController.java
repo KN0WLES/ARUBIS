@@ -180,50 +180,6 @@ public class AccountMenuController extends BaseMenuController {
         }
     }
 
-    public Account login(String username, String password) throws AccountException {
-        Account account2 = accountController.login(username, password);
-
-        System.out.print("\033[H\033[2J");
-        System.out.flush();
-
-        mostrarMensajeCentrado("==== SISTEMA DE GESTIÓN DE HORARIOS ====");
-        System.out.println("Usuario actual: " + username + " \t\t\t\t modo: " +
-                (account2.getTipoCuenta() != null ? account2.getTipoCuenta().getDescripcion() : "No definido"));
-
-        return account2;
-    }
-
-    public void registerAccount(Account newAccount) throws AccountException {
-        accountController.registerAccount(newAccount);
-    }
-
-    public Account collectRegistrationData(Scanner scanner, Console console) {
-        System.out.print("Nombre: ");
-        String nombre = scanner.nextLine();
-
-        System.out.print("Apellido: ");
-        String apellido = scanner.nextLine();
-
-        System.out.print("Teléfono: ");
-        String phone = scanner.nextLine();
-
-        System.out.print("Email: ");
-        String email = scanner.nextLine();
-
-        System.out.print("Usuario: ");
-        String username = scanner.nextLine();
-
-        String password;
-        if (console != null) {
-            password = new String(console.readPassword("Contraseña: "));
-        } else {
-            System.out.print("Contraseña: ");
-            password = scanner.nextLine();
-        }
-
-        return new Account(nombre, apellido, phone, email, username, password, TipoCuenta.ESTUDIANTE);
-    }
-
     // ==================== FUNCIONES ADMIN ====================
     private void verTodasCuentasPaginado() {
         clearScreen();
@@ -725,7 +681,7 @@ public class AccountMenuController extends BaseMenuController {
 
     private void mostrarSustitucionesActivas(SubstituteController subController) {
         clearScreen();
-        System.out.println("\n=== SUSTITUCIONES ACTIVAS ===");
+        mostrarMensajeCentrado("=== SUSTITUCIONES ACTIVAS ===");
         
         try {
             List<Substitute> sustituciones = subController.getActiveSubstitutes();

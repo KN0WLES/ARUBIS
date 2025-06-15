@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 public class SubjectController implements ISubject {
     private final IFile<Subject> fileHandler;
-    private final String filePath = "src/main/java/unicorn/arubis/dto/subjects.txt";
+    private final String filePath = "src/main/java/unicorn/dto/subjects.txt";
     private Map<String, Subject> subjects;
     private ISchedule scheduleController;
 

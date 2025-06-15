@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 public class NewsController implements INews {
     private final IFile<News> fileHandler;
-    private final String filePath = "src/main/java/unicorn/data/news.txt";
+    private final String filePath = "src/main/java/unicorn/dto/news.txt";
     private Map<String, News> newsMap;
     private String currentUserId;
 

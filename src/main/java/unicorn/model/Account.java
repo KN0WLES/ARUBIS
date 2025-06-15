@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Clase que representa el modelo de una cuenta de usuario en el sistema.
@@ -41,7 +42,13 @@ public class Account extends Base<Account> {
         this.user = user;
         this.hashedPassword = PasswordUtil.hashPassword(plainPassword);
         this.tipoCuenta = tipo;
-        this.status = (tipo == TipoCuenta.ESTUDIANTE) ? AccountStatus.PENDIENTE : AccountStatus.ACTIVO;
+        setStatus(tipo);
+
+    }
+
+    private void setStatus(TipoCuenta tipo){
+        if (tipo == TipoCuenta.ESTUDIANTE) this.status = AccountStatus.PENDIENTE;
+        else if (tipo == TipoCuenta.PROFESOR || tipo == TipoCuenta.ADMIN)  this.status = AccountStatus.ACTIVO;
     }
 
     public static class RoleHistory {
@@ -193,6 +200,14 @@ public class Account extends Base<Account> {
     // Serialización
     @Override
     public String toFile() {
+        String roleHistoryStr = roleHistory.stream()
+                .map(rh -> String.format("%s,%s,%s",
+                        rh.getRole().name(),
+                        rh.getStartDate(),
+                        rh.getEndDate() != null ? rh.getEndDate().toString() : "null"))
+                .collect(Collectors.joining(";"));
+
+
         return String.join("|",
                 escapeForSerialization(id),
                 escapeForSerialization(nombre),
@@ -200,16 +215,19 @@ public class Account extends Base<Account> {
                 escapeForSerialization(phone),
                 escapeForSerialization(email),
                 escapeForSerialization(user),
-                hashedPassword, tipoCuenta.name(),
+                hashedPassword,
+                tipoCuenta.name(),
                 substituteId != null ? substituteId : "null",
-                alternateEmail != null ? alternateEmail : "null"
+                alternateEmail != null ? alternateEmail : "null",
+                status != null ? status.name() : "null",
+                roleHistoryStr.isEmpty() ? "null" : roleHistoryStr
         );
     }
 
     @Override
     public Account fromFile(String line) {
         String[] parts = line.split("\\|");
-        if (parts.length != 10) {
+        if (parts.length != 12) {
             throw new IllegalArgumentException("Formato de línea inválido");
         }
 
@@ -224,6 +242,20 @@ public class Account extends Base<Account> {
         account.setTipoCuenta(TipoCuenta.valueOf(parts[7]));
         account.substituteId = "null".equals(parts[8]) ? null : parts[8];
         account.alternateEmail = "null".equals(parts[9]) ? null : parts[9];
+        account.status = "null".equals(parts[10]) ? null : AccountStatus.valueOf(parts[10]);
+
+        // Procesar roleHistory
+        account.roleHistory = new ArrayList<>();
+        if (!"null".equals(parts[11])) {
+            String[] roles = parts[11].split(";");
+            for (String role : roles) {
+                String[] roleData = role.split(",");
+                TipoCuenta tipoCuenta = TipoCuenta.valueOf(roleData[0]);
+                LocalDate startDate = LocalDate.parse(roleData[1]);
+                LocalDate endDate = "null".equals(roleData[2]) ? null : LocalDate.parse(roleData[2]);
+                account.roleHistory.add(new RoleHistory(tipoCuenta, startDate, endDate));
+            }
+        }
 
         return account;
     }

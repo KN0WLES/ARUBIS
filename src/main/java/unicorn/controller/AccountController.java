@@ -73,7 +73,7 @@ public class AccountController implements IAccount {
             }
             initializeDefaultAdmin();
             initializeDefaultPrf();
-            createDefaultContactFAQ();
+            //createDefaultContactFAQ();
         } catch (FileException e) {
             this.accounts = new HashMap<>(); // En caso de error, inicializamos un mapa vacío
             System.err.println("Error al cargar cuentas, iniciando con lista vacía: " + e.getMessage());
@@ -559,6 +559,7 @@ public class AccountController implements IAccount {
         return generateProfessorUsername(nombre1, nombre2, apellido1, apellido2) + "@prf.umss.edu";
     }
 
+    /**
     private void createDefaultContactFAQ() {
         try {
             FaQController faqController = new FaQController(faqFile);
@@ -566,7 +567,7 @@ public class AccountController implements IAccount {
         } catch (Exception e) {
             System.err.println("Error al crear FAQ de contacto: " + e.getMessage());
         }
-    }
+    }*/
 
     @Override
     public List<Account> getAllAccounts() throws AccountException {

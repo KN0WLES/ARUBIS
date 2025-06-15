@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 public class RoomController implements IRoom {
     
     private final IFile<Room> fileHandler;
-    private final String filePath = "src/main/java/unicorn/arubis/dto/rooms.txt";
+    private final String filePath = "src/main/java/unicorn/dto/rooms.txt";
     private Map<String, Room> rooms;
 
     public RoomController(IFile<Room> fileHandler)throws RoomException {

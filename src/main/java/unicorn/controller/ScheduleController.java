@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
 
 public class ScheduleController implements ISchedule {
     private final IFile<Schedule> fileHandler;
-    private final String filePath = "src/main/java/unicorn/arubis/dto/schedules.txt";
+    private final String filePath = "src/main/java/unicorn/dto/schedules.txt";
     private Map<String, Schedule> schedules;
 
     public ScheduleController(IFile<Schedule> fileHandler) throws ScheduleException {
