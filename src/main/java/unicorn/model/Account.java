@@ -26,6 +26,7 @@ public class Account extends Base<Account> {
     private String substituteId;
     private String alternateEmail;
     private AccountStatus status;
+    private boolean requiereCambioPassword = false;
 
     public Account() {
         this.id = UUID.randomUUID().toString();
@@ -197,6 +198,14 @@ public class Account extends Base<Account> {
         this.email = email;
     }
 
+    public boolean isRequiereCambioPassword() {
+        return requiereCambioPassword;
+    }
+
+    public void setRequiereCambioPassword(boolean requiereCambioPassword) {
+        this.requiereCambioPassword = requiereCambioPassword;
+    }
+
     // Serialización
     @Override
     public String toFile() {
@@ -220,6 +229,7 @@ public class Account extends Base<Account> {
                 substituteId != null ? substituteId : "null",
                 alternateEmail != null ? alternateEmail : "null",
                 status != null ? status.name() : "null",
+                requiereCambioPassword ? "true" : "false",
                 roleHistoryStr.isEmpty() ? "null" : roleHistoryStr
         );
     }
@@ -227,7 +237,7 @@ public class Account extends Base<Account> {
     @Override
     public Account fromFile(String line) {
         String[] parts = line.split("\\|");
-        if (parts.length != 12) {
+        if (parts.length != 13) {
             throw new IllegalArgumentException("Formato de línea inválido");
         }
 
@@ -243,11 +253,12 @@ public class Account extends Base<Account> {
         account.substituteId = "null".equals(parts[8]) ? null : parts[8];
         account.alternateEmail = "null".equals(parts[9]) ? null : parts[9];
         account.status = "null".equals(parts[10]) ? null : AccountStatus.valueOf(parts[10]);
+        account.requiereCambioPassword = "true".equals(parts[11]);
 
         // Procesar roleHistory
         account.roleHistory = new ArrayList<>();
-        if (!"null".equals(parts[11])) {
-            String[] roles = parts[11].split(";");
+        if (!"null".equals(parts[12])) {
+            String[] roles = parts[12].split(";");
             for (String role : roles) {
                 String[] roleData = role.split(",");
                 TipoCuenta tipoCuenta = TipoCuenta.valueOf(roleData[0]);

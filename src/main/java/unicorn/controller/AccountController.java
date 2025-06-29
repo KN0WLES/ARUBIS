@@ -43,7 +43,7 @@ public class AccountController implements IAccount {
     private final IFile<Account> fileHandler;
     private final IFile<Substitute> substituteFile;
     private final INews newsController;
-    private final IFile<FaQ> faqFile;
+    //private final IFile<FaQ> faqFile;
     private final Map<TipoCuenta, String> filePaths;
     private Map<String, Account> accounts;
 
@@ -59,7 +59,7 @@ public class AccountController implements IAccount {
         this.accounts = new HashMap<>(); // Inicializamos el HashMap
 
         this.newsController = newsController;
-        this.faqFile = faqFile;
+        //this.faqFile = faqFile;
 
         try {
             // Asegurarse de que todos los archivos existan y cargar datos de cada uno
@@ -72,7 +72,7 @@ public class AccountController implements IAccount {
                 }
             }
             initializeDefaultAdmin();
-            initializeDefaultPrf();
+            //initializeDefaultPrf();
             //createDefaultContactFAQ();
         } catch (FileException e) {
             this.accounts = new HashMap<>(); // En caso de error, inicializamos un mapa vacío
@@ -393,7 +393,7 @@ public class AccountController implements IAccount {
             }
         }
     }
-
+    /** 
     private void initializeDefaultPrf() throws AccountException {
         //Verifica si ya existen profesores y de ser asi no hacer nada
         boolean profExist = accounts.values().stream()
@@ -528,7 +528,7 @@ public class AccountController implements IAccount {
             }
         }
         saveChanges();
-    }
+    }*/
 
     private String generateProfessorUsername(String nombre1, String nombre2, String apellido1, String apellido2) {
         StringBuilder sb = new StringBuilder();

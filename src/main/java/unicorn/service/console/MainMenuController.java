@@ -18,10 +18,11 @@ public class MainMenuController extends BaseMenuController {
     private ScheduleMenuController scheduleMenu;
     private SubjectMenuController subjectMenu;
     private Account currentAccount;
+    private ExcelHorarioLoader excelLoader;
     private Logo logo;
     private Scanner scanner;
 
-    public MainMenuController() throws FaQException, AccountException, SubjectException, RoomException, NewsException, ScheduleException {
+    public MainMenuController() throws FaQException, AccountException, SubjectException, RoomException, NewsException, PeriodException {
         this.scanner = new Scanner(System.in);
         this.logo = new Logo();
 
@@ -52,14 +53,14 @@ public class MainMenuController extends BaseMenuController {
         //logo.details();
     }
 
-    public void run() throws FaQException, AccountException, SubjectException, RoomException, NewsException, ScheduleException {
+    public void run() throws FaQException, AccountException, SubjectException, RoomException, NewsException, PeriodException {
         logo();
         waitForValidLogin(); // Fase 1
         initializeControllers(); // Fase 2
         showMainMenu();
     }
 
-    private void waitForValidLogin() throws FaQException, AccountException, SubjectException, RoomException, NewsException, ScheduleException {
+    private void waitForValidLogin() throws FaQException, AccountException, SubjectException, RoomException, NewsException, PeriodException {
         while (currentAccount == null) {
             showLoginMenu();
         }
@@ -72,15 +73,31 @@ public class MainMenuController extends BaseMenuController {
             IFile<Account> accountFileHandler = new FileHandler<>(new Account());
             IFile<Substitute> substituteFileHandler = new FileHandler<>(new Substitute());
             IFile<FaQ> faqFileHandler = new FileHandler<>(new FaQ());
+            IFile<Subject> subjectFileHandler = new FileHandler<>(new Subject());
+            IFile<Room> roomFileHandler = new FileHandler<>(new Room());
+            IFile<Schedule> scheduleFileHandler = new FileHandler<>(new Schedule());
+            IFile<Period> periodFileHandler = new FileHandler<>(new Period());
             INews newsController = new NewsController(new FileHandler<>(new News()), currentAccount.getUser());
 
             this.accountController = new AccountController(accountFileHandler, substituteFileHandler, newsController, faqFileHandler);
-
             this.accountMenu = new AccountMenuController(accountController, currentAccount);
+
+            RoomController roomController = new RoomController(roomFileHandler);
+            SubjectController subjectController = new SubjectController(subjectFileHandler);
+            ScheduleController scheduleController = new ScheduleController(scheduleFileHandler, new PeriodController(roomController, periodFileHandler));
+ 
+
+            this.excelLoader = new ExcelHorarioLoader(
+                accountController, 
+                subjectController, 
+                roomController, 
+                scheduleController
+            );
+            excelLoader.cargarExcelSiCorresponde("src/main/java/unicorn/resources/resources/DATOS_ARUBIS.xlsx");
         } catch (Exception e) {
             System.err.println("Error initializing system: " + e.getMessage());
             System.exit(1);
-        }
+        } 
     }
 
     @Override
@@ -89,7 +106,7 @@ public class MainMenuController extends BaseMenuController {
         if (currentAccount == null) {
             try {
                 showLoginMenu();
-            } catch (AccountException | FaQException | NewsException | RoomException | ScheduleException | SubjectException e) {
+            } catch (AccountException | FaQException | NewsException | RoomException | PeriodException | SubjectException e) {
                 System.out.println("Error al mostrar el menú de inicio de sesión: " + e.getMessage());
                 readLine("Presione Enter para continuar...");
             }
@@ -98,7 +115,7 @@ public class MainMenuController extends BaseMenuController {
         }
     }
 
-    private void showLoginMenu()  throws AccountException, FaQException, NewsException, RoomException, ScheduleException, SubjectException{
+    private void showLoginMenu()  throws AccountException, FaQException, NewsException, RoomException, PeriodException, SubjectException{
         while (currentAccount == null) {
             clearScreen();
             mostrarMensajeCentrado(" SISTEMA DE GESTIÓN ACADÉMICA ");
@@ -117,23 +134,23 @@ public class MainMenuController extends BaseMenuController {
     }
 
     private void showMainMenu() {
-        while (currentAccount != null) {
+        boolean exit = false;
+        while (!exit && currentAccount != null) {
             clearScreen();
             mostrarMensajeCentrado(" MENU PRINCIPAL ");
             System.out.println("Usuario: " + currentAccount.getUser() +
                     " | Rol: " + currentAccount.getTipoCuenta().getDescripcion());
-            System.out.println("====================================");
+            mostrarMensajeCentrado("====================================");
 
             if (currentAccount.getTipoCuenta() == TipoCuenta.ADMIN) {
                 System.out.println("1. Mi Cuenta");
                 System.out.println("2. Gestión de Horarios");
                 System.out.println("3. Gestión de Cuentas");
-                //System.out.println("4. Gestión de Estudiantes");
-                System.out.println("5. Gestión de Aulas");
-                System.out.println("6. Gestión de Comunicados");
-                System.out.println("7. Ver todos los horarios");
-                System.out.println("8. Preguntas Frecuentes");
-                System.out.println("9. Cerrar sesión");
+                System.out.println("4. Gestión de Aulas");
+                System.out.println("5. Gestión de Comunicados");
+                System.out.println("6. Ver todos los horarios");
+                System.out.println("7. Preguntas Frecuentes");
+                System.out.println("8. Cerrar sesión");
                 System.out.println("0. Salir");
             } else if (currentAccount.getTipoCuenta() == TipoCuenta.PROFESOR) {
                 System.out.println("1. Mi Cuenta");
@@ -147,11 +164,10 @@ public class MainMenuController extends BaseMenuController {
                 System.out.println("1. Mi Cuenta");
                 System.out.println("2. Mis Horarios");
                 System.out.println("3. Mis Materias");
-                System.out.println("4. Mis Profesores");
-                System.out.println("5. Aulas asignadas");
-                System.out.println("6. Notificaciones");
-                System.out.println("7. Ayuda y soporte");
-                System.out.println("8. Cerrar sesión");
+                System.out.println("4. Aulas asignadas");
+                System.out.println("5. Notificaciones");
+                System.out.println("6. Ayuda y soporte");
+                System.out.println("7. Cerrar sesión");
                 System.out.println("0. Salir");
             }
 
@@ -162,7 +178,10 @@ public class MainMenuController extends BaseMenuController {
 
     private void handleMainMenuOption(int option) {
         try {
-            if (currentAccount == null) return;
+            if (currentAccount == null) {
+                showMenu(); // Si no hay cuenta, muestra el menú de inicio
+                return;
+            }
 
             switch (currentAccount.getTipoCuenta()) {
                 case ADMIN -> handleAdminMenu(option);
@@ -178,13 +197,13 @@ public class MainMenuController extends BaseMenuController {
     private void handleAdminMenu(int option) {
         switch (option) {
             case 1 -> accountMenu.showCommonMenu();
-            //case 2 -> scheduleMenu.showMenu();
+            case 2 -> scheduleMenu.showMenu();
             case 3 -> accountMenu.showMenu();
-            //case 4 -> accountMenu.showMenu();
-            //case 5 -> roomMenu.showMenu();
-            case 6 -> newsMenu.showMenu();
-            //case 7 -> scheduleMenu.showAllSchedules();
-            case 8 -> faqMenu.showMenu();
+            case 4 -> roomMenu.showMenu();
+            case 5 -> newsMenu.showMenu();
+            case 6 -> scheduleMenu.showMenu();
+            case 7 -> faqMenu.showMenu();
+            case 8 -> cargarDesdeExcel();
             case 9 -> logout();
             case 0 -> {
                 System.out.println("¡Gracias por usar el sistema!");
@@ -197,8 +216,8 @@ public class MainMenuController extends BaseMenuController {
     private void handleProfesorMenu(int option) {
         switch (option) {
             case 1 -> accountMenu.showCommonMenu();
-            //case 2 -> scheduleMenu.showTeacherSchedule();
-            //case 4 -> scheduleMenu.showScheduleChangeMenu();
+            case 2 -> scheduleMenu.showMenu();
+            case 4 -> scheduleMenu.showMenu();
             case 5 -> newsMenu.showMenu();
             case 6 -> faqMenu.showMenu();
             case 7 -> logout();
@@ -213,13 +232,12 @@ public class MainMenuController extends BaseMenuController {
     private void handleEstudianteMenu(int option) {
         switch (option) {
             case 1 -> accountMenu.showCommonMenu();
-            //case 2 -> scheduleMenu.showStudentSchedule();
-            //case 3 -> subjectMenu.showMenu();
-            case 4 -> accountMenu.showMenu();
-            //case 5 -> roomMenu.showAssignedRooms();
-            case 6 -> newsMenu.showMenu();
-            case 7 -> faqMenu.showMenu();
-            case 8 -> logout();
+            case 2 -> scheduleMenu.showMenu();
+            case 3 -> subjectMenu.showMenu();
+            case 4 -> roomMenu.showMenu();
+            case 5 -> newsMenu.showMenu();
+            case 6 -> faqMenu.showMenu();
+            case 7 -> logout();
             case 0 -> {
                 System.out.println("¡Gracias por usar el sistema!");
                 System.exit(0);
@@ -228,7 +246,7 @@ public class MainMenuController extends BaseMenuController {
         }
     }
 
-    private void login()  throws AccountException, FaQException, NewsException, RoomException, ScheduleException, SubjectException{
+    private void login()  throws AccountException, FaQException, NewsException, RoomException, PeriodException, SubjectException{
         Console console = System.console();
         try {
             String username, password;
@@ -258,7 +276,7 @@ public class MainMenuController extends BaseMenuController {
         }
     }
 
-    private void initializeUserMenus() throws AccountException, FaQException, NewsException, RoomException, ScheduleException, SubjectException {
+    private void initializeUserMenus() throws AccountException, FaQException, NewsException, RoomException, PeriodException, SubjectException, ScheduleException, FileException {
         if (currentAccount == null) return;
 
         this.accountMenu = new AccountMenuController(accountController, currentAccount);
@@ -315,9 +333,21 @@ public class MainMenuController extends BaseMenuController {
         currentAccount = null;
         System.out.println("Sesión cerrada exitosamente");
         readLine("Presione Enter para continuar...");
+        showMenu();
     }
 
-    public static void main(String[] args) throws FaQException, AccountException, SubjectException, RoomException, NewsException, ScheduleException {
+    private void cargarDesdeExcel() {
+        String filePath = readLine("Ruta del archivo Excel: ");
+        try {
+            excelLoader.cargarExcelSiCorresponde(filePath);
+            System.out.println("Datos cargados exitosamente desde Excel");
+        } catch (Exception e) {
+            System.out.println("Error al cargar desde Excel: " + e.getMessage());
+        }
+        readLine("Presione Enter para continuar...");
+    }
+
+    public static void main(String[] args) throws FaQException, AccountException, SubjectException, RoomException, NewsException, PeriodException {
         new MainMenuController();
     }
 }

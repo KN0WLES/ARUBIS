@@ -2,7 +2,7 @@ package unicorn.interfaces;
 
 import unicorn.exceptions.SubstituteException;
 import unicorn.model.Account;
-import unicorn.util.TipoCuenta;
+//import unicorn.util.TipoCuenta;
 import unicorn.exceptions.AccountException;
 
 import java.time.LocalDate;

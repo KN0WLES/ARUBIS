@@ -37,7 +37,7 @@ public class NewsMenuController extends BaseMenuController {
     // ==================== ADMIN MENU ====================
     private void showAdminMenu() {
         while (true) {
-            printMenuHeader("ADMINISTRACIÓN DE COMUNICADOS");
+            mostrarMensajeCentrado("ADMINISTRACIÓN DE COMUNICADOS");
             System.out.println("1. Enviar comunicado global");
             System.out.println("2. Ver todos los comunicados");
             System.out.println("3. Buscar por tipo");
@@ -60,7 +60,7 @@ public class NewsMenuController extends BaseMenuController {
     // ==================== TEACHER MENU ====================
     private void showTeacherMenu() {
         while (true) {
-            printMenuHeader("MENÚ DE COMUNICADOS (PROFESOR)");
+            mostrarMensajeCentrado("MENÚ DE COMUNICADOS (PROFESOR)");
             System.out.println("1. Enviar a materia");
             System.out.println("2. Enviar a estudiante");
             System.out.println("3. Mis comunicados enviados");
@@ -81,7 +81,7 @@ public class NewsMenuController extends BaseMenuController {
     // ==================== STUDENT MENU ====================
     private void showStudentMenu() {
         while (true) {
-            printMenuHeader("MIS NOTIFICACIONES");
+            mostrarMensajeCentrado("MIS NOTIFICACIONES");
             System.out.printf("1. Ver no leídas (%d)%n", newsController.getUnreadCount(account.getId()));
             System.out.println("2. Ver todas");
             System.out.println("3. Comunicados globales");
@@ -186,18 +186,62 @@ public class NewsMenuController extends BaseMenuController {
             return;
         }
 
-        System.out.println("\n=== LISTA DE COMUNICADOS ===");
-        newsList.forEach(n -> {
-            System.out.println(n.getInfo());
-            System.out.println("-------------------------");
-        });
+        mostrarMensajeCentrado("=== LISTA DE COMUNICADOS ===");
+        String border = "+" + "-".repeat(78) + "+";
+
+        for (News n : newsList) {
+            // Mostrar cada comunicado con formato de caja
+            System.out.println(border);
+            System.out.printf("| %-76s |%n", "ID: " + n.getId());
+            System.out.println(border);
+
+            System.out.printf("| %-76s |%n", "TIPO: " + n.getTipoNotificacion().getDescripcion());
+            System.out.println(border);
+
+            System.out.printf("| %-76s |%n", "FECHA: " + n.getFecha());
+            System.out.println(border);
+
+            System.out.printf("| %-76s |%n", "MENSAJE:");
+            String[] messageLines = wordWrap(n.getMensaje(), 76);
+            for (String line : messageLines) {
+                System.out.printf("| %-76s |%n", line);
+            }
+            System.out.println(border);
+
+            System.out.printf("| %-76s |%n", "ESTADO: " + (n.isLeida() ? "LEÍDO" : "NO LEÍDO"));
+            System.out.println(border);
+            System.out.println(); // Espacio entre comunicados
+        }
         System.out.println("Total: " + newsList.size() + " comunicados\n");
+    }
+
+    private String[] wordWrap(String text, int width) {
+        if (text == null) return new String[]{"N/A"};
+
+        String[] words = text.split("\\s+");
+        List<String> lines = new ArrayList<>();
+        StringBuilder currentLine = new StringBuilder();
+
+        for (String word : words) {
+            if (currentLine.length() + word.length() + 1 <= width) {
+                if (currentLine.length() > 0) currentLine.append(" ");
+                currentLine.append(word);
+            } else {
+                lines.add(currentLine.toString());
+                currentLine = new StringBuilder(word);
+            }
+        }
+        if (currentLine.length() > 0) {
+            lines.add(currentLine.toString());
+        }
+
+        return lines.toArray(new String[0]);
     }
 
     private void displayStatistics() {
         try {
             Map<TipoNews, Long> stats = newsController.getNewsStatistics();
-            printMenuHeader("ESTADÍSTICAS DE COMUNICADOS");
+           mostrarMensajeCentrado("ESTADÍSTICAS DE COMUNICADOS");
 
             if (stats.isEmpty()) {
                 System.out.println("No hay datos estadísticos disponibles");

@@ -1,84 +1,74 @@
 package unicorn.model;
 
-import java.util.UUID;
+import java.util.*;
 
-/**
- * Clase que representa el modelo de un horario en el sistema.
- * Gestiona información completa de horarios incluyendo día de la semana,
- * hora de inicio, hora de fin y la materia asociada.
- * 
- * @description Funcionalidades principales:
- *                   - Crear horarios con validación de formato de tiempo.
- *                   - Asociar horarios a materias específicas.
- *                   - Serializar y deserializar horarios para almacenamiento.
- * 
- * @see Base
- */
 public class Schedule extends Base<Schedule> {
     private String id;
-    private String diaSemana;
-    private String horaInicio;
-    private String horaFin;
-    private String materiaId;
-    private String classroomId;
+    private String profesorId;
+    private String subjectId;
+    private String grupo;
+    private String clasType;
+    private List<Period> periods;
 
-    /**
-     * Constructor vacío para serialización.
-     */
-    public Schedule(){}
-    
-    /**
-     * Constructor principal para crear un horario.
-     *
-     * @param diaSemana Día de la semana
-     * @param horaInicio Hora de inicio
-     * @param horaFin Hora de fin
-     * @param materiaId ID de la materia asociada
-     * @param classroomId
-     */
-    public Schedule(String diaSemana, String horaInicio, String horaFin, String materiaId, String classroomId) {
+    public Schedule() {
         this.id = UUID.randomUUID().toString();
-        this.diaSemana = diaSemana;
-        this.horaInicio = horaInicio;
-        this.horaFin = horaFin;
-        this.materiaId = materiaId;
-        this.classroomId = classroomId;
+        this.periods = new ArrayList<>();
     }
 
-    // Métodos para obtener información
+    public Schedule(String profesorId, String subjectId, String grupo, String clasType, List<Period> periods) {
+        this();
+        this.profesorId = profesorId;
+        this.subjectId = subjectId;
+        this.grupo = grupo;
+        this.clasType = clasType;
+        if (periods != null) this.periods = periods;
+    }
+
+    // Getters y setters
     @Override
     public String getId() { return id; }
-    public String getDiaSemana() { return diaSemana; }
-    public String getHoraInicio() { return horaInicio; }
-    public String getHoraFin() { return horaFin; }
-    public String getMateriaId() { return materiaId; }
-    public String getClassroomId() { return classroomId; }
+    public String getProfesorId() { return profesorId; }
+    public String getSubjectId() { return subjectId; }
+    public String getGrupo() { return grupo; }
+    public List<Period> getPeriods() { return periods; }
+    public String getClasType() { return clasType; }
 
-    // Métodos para modificar el horario
-    public void setDiaSemana(String diaSemana) { this.diaSemana = diaSemana; }
-    public void setHoraInicio(String horaInicio) { this.horaInicio = horaInicio; }
-    public void setHoraFin(String horaFin) { this.horaFin = horaFin; }
-    public void setMateriaId(String materiaId) { this.materiaId = materiaId; }
-    public void setClassroomId(String classroomId) { this.classroomId = classroomId; }
+    public void setProfesorId(String profesorId) { this.profesorId = profesorId; }
+    public void setSubjectId(String subjectId) { this.subjectId = subjectId; }
+    public void setGrupo(String grupo) { this.grupo = grupo; }
+    public void setPeriods(List<Period> periods) { this.periods = periods; }
+    public void setClasType(String clasType) { this.clasType = clasType; }
 
+    // Serialización simple (ajusta según tu persistencia)
     @Override
     public String toFile() {
-        return String.join("|", id, diaSemana, horaInicio, horaFin, materiaId, classroomId);
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.join("|", id, profesorId, subjectId, grupo));
+        for (Period p : periods) {
+            sb.append("|").append(p.toFile());
+        }
+        return sb.toString();
     }
 
     @Override
     public Schedule fromFile(String line) {
         String[] parts = line.split("\\|");
-        if (parts.length != 6) {
-            throw new IllegalArgumentException("Formato de línea incorrecto para deserializar Schedule");
-        }
-        Schedule schedule = new Schedule(parts[1], parts[2], parts[3], parts[4], parts[5]);
+        Schedule schedule = new Schedule();
         schedule.id = parts[0];
+        schedule.profesorId = parts[1];
+        schedule.subjectId = parts[2];
+        schedule.grupo = parts[3];
+        schedule.periods = new ArrayList<>();
+        for (int i = 4; i < parts.length; i++) {
+            Period period = new Period.Builder().build().fromFile(parts[i]);
+            schedule.periods.add(period);
+        }
         return schedule;
     }
 
     @Override
     public String getInfo() {
-        return String.format("Horario: %s %s-%s\nMateria ID: %s\nClassroom ID: %s", diaSemana, horaInicio, horaFin, materiaId, classroomId);
+        return String.format("Horario: %s | Profesor: %s | Materia: %s | Grupo: %s | Periodos: %d",
+                id, profesorId, subjectId, grupo, periods.size());
     }
 }

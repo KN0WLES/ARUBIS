@@ -131,6 +131,12 @@ public class Room extends Base<Room> {
             throw new IllegalArgumentException("La capacidad debe ser mayor a 0");
         this.capacidad = capacidad;
     }
+    public void setNombre(String nombre){
+         if(nombre == null || nombre.isEmpty()){
+            throw new IllegalArgumentException("El nombre del aula no puede ser nula o vacio");
+
+         }
+    }
 
     /**
      * Establece si el aula cuenta con proyector.
@@ -194,7 +200,6 @@ public class Room extends Base<Room> {
             throw new IllegalArgumentException("Estado inválido. Use L (Libre), O (Ocupado) o M (Mantenimiento)");
         this.disponible = estado;
     }
-
 
     @Override
     public String toFile() {

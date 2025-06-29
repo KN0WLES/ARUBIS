@@ -16,4 +16,14 @@ public class SubjectException extends Exception {
     public static SubjectException invalidCredits() {
         return new SubjectException("Número de créditos inválido (debe ser positivo)");
     }
+
+    // Sugerencia: por si necesitas validar el tipo de materia
+    public static SubjectException invalidType() {
+        return new SubjectException("Tipo de materia inválido");
+    }
+
+    // Sugerencia: por si el nombre está vacío o nulo
+    public static SubjectException invalidName() {
+        return new SubjectException("El nombre de la materia no puede estar vacío");
+    }
 }

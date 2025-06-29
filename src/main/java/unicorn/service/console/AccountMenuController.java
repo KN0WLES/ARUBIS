@@ -1,5 +1,6 @@
 package unicorn.service.console;
 
+import unicorn.util.AccountStatus;
 import unicorn.controller.*;
 import unicorn.exceptions.*;
 import unicorn.interfaces.*;
@@ -59,7 +60,7 @@ public class AccountMenuController extends BaseMenuController {
     // ==================== MENÚ ADMIN ====================
     private void showAdminMenu() {
         while (true) {
-            System.out.println("\n=== GESTIÓN DE CUENTAS (ADMIN) ===");
+            mostrarMensajeCentrado("\n=== GESTIÓN DE CUENTAS (ADMIN) ===");
             System.out.println("1. Ver todas las cuentas (paginado)");
             System.out.println("2. Buscar cuentas (avanzado)");
             System.out.println("3. Filtrar cuentas por rol");
@@ -69,6 +70,8 @@ public class AccountMenuController extends BaseMenuController {
             System.out.println("7. Ver estadísticas");
             System.out.println("8. Crear cuenta docente/administrador");
             System.out.println("9. Gestión de sustituciones");
+            System.out.println("10. Gestionar activación de cuentas");
+
             System.out.println("0. Volver al menú principal");
             switch (readIntOption("Selección: ")) {
                 case 1 -> verTodasCuentasPaginado();
@@ -80,6 +83,7 @@ public class AccountMenuController extends BaseMenuController {
                 case 7 -> verEstadisticas();
                 case 8 -> crearCuentaDocenteAdmin();
                 case 9 -> gestionSustituciones();
+                case 10 -> gestionActivacionCuentas();
                 case 0 -> { return; }
                 default -> System.out.println("Opción inválida.");
             }
@@ -235,7 +239,7 @@ public class AccountMenuController extends BaseMenuController {
 
     private void buscarCuentasAvanzado() {
         clearScreen();
-        System.out.println("\n=== BÚSQUEDA AVANZADA ===");
+        mostrarMensajeCentrado("\n=== BÚSQUEDA AVANZADA ===");
         String nombre = readLine("Nombre (dejar vacío para omitir): ");
         String apellido = readLine("Apellido (dejar vacío para omitir): ");
         String email = readLine("Email (dejar vacío para omitir): ");
@@ -252,7 +256,7 @@ public class AccountMenuController extends BaseMenuController {
             if (resultados.isEmpty()) {
                 System.out.println("\nNo se encontraron cuentas con esos criterios.");
             } else {
-                System.out.println("\n=== RESULTADOS ===");
+                mostrarMensajeCentrado("\n=== RESULTADOS ===");
                 resultados.forEach(a -> System.out.println(
                     String.format("%s %s (%s) - %s - %s", 
                     a.getNombre(), a.getApellido(), a.getUser(), a.getEmail(), a.getTipoCuenta())
@@ -266,7 +270,7 @@ public class AccountMenuController extends BaseMenuController {
 
     private void filtrarPorRol() {
         clearScreen();
-        System.out.println("\n=== FILTRAR POR ROL ===");
+        mostrarMensajeCentrado("\n=== FILTRAR POR ROL ===");
         System.out.println("1. Administradores");
         System.out.println("2. Profesores");
         System.out.println("3. Estudiantes");
@@ -293,7 +297,7 @@ public class AccountMenuController extends BaseMenuController {
             if (resultados.isEmpty()) {
                 System.out.println("\nNo se encontraron cuentas con ese rol.");
             } else {
-                System.out.println("\n=== RESULTADOS ===");
+                mostrarMensajeCentrado("\n=== RESULTADOS ===");
                 resultados.forEach(a -> System.out.println(
                     String.format("%s %s (%s) - %s", 
                     a.getNombre(), a.getApellido(), a.getUser(), a.getEmail())
@@ -475,7 +479,7 @@ public class AccountMenuController extends BaseMenuController {
             long profesores = cuentas.stream().filter(a -> a.getTipoCuenta() == TipoCuenta.PROFESOR).count();
             long estudiantes = cuentas.stream().filter(a -> a.getTipoCuenta() == TipoCuenta.ESTUDIANTE).count();
             
-            System.out.println("\n=== ESTADÍSTICAS DE CUENTAS ===");
+            mostrarMensajeCentrado("\n=== ESTADÍSTICAS DE CUENTAS ===");
             System.out.println("Total de cuentas: " + total);
             System.out.println("Administradores: " + admins + " (" + (admins*100/total) + "%)");
             System.out.println("Profesores: " + profesores + " (" + (profesores*100/total) + "%)");
@@ -488,7 +492,7 @@ public class AccountMenuController extends BaseMenuController {
 
     private void crearCuentaDocenteAdmin() {
         clearScreen();
-        System.out.println("\n=== CREAR CUENTA DOCENTE/ADMIN ===");
+        mostrarMensajeCentrado("\n=== CREAR CUENTA DOCENTE/ADMIN ===");
         
         String nombre = readLine("Nombre: ");
         String apellido = readLine("Apellido: ");
@@ -520,7 +524,7 @@ public class AccountMenuController extends BaseMenuController {
 
     private void gestionSustituciones() {
     clearScreen();
-    System.out.println("\n=== GESTIÓN DE SUSTITUCIONES ===");
+    mostrarMensajeCentrado("\n=== GESTIÓN DE SUSTITUCIONES ===");
     
     try {
         Substitute prototype = new Substitute();
@@ -553,7 +557,7 @@ public class AccountMenuController extends BaseMenuController {
 
     private void promoverProfesorAAdmin(SubstituteController subController) {
         clearScreen();
-        System.out.println("\n=== PROMOVER PROFESOR A ADMINISTRADOR ===");
+        mostrarMensajeCentrado("\n=== PROMOVER PROFESOR A ADMINISTRADOR ===");
         
         try {
             // Obtener lista de profesores
@@ -634,7 +638,7 @@ public class AccountMenuController extends BaseMenuController {
 
     private void revertirAdminAProfesor(SubstituteController subController) {
         clearScreen();
-        System.out.println("\n=== REVERTIR ADMINISTRADOR A PROFESOR ===");
+        mostrarMensajeCentrado("\n=== REVERTIR ADMINISTRADOR A PROFESOR ===");
         
         try {
             // Obtener administradores que fueron profesores
@@ -710,7 +714,7 @@ public class AccountMenuController extends BaseMenuController {
 
     private void finalizarSustitucion(SubstituteController subController) {
         clearScreen();
-        System.out.println("\n=== FINALIZAR SUSTITUCIÓN ===");
+        mostrarMensajeCentrado("\n=== FINALIZAR SUSTITUCIÓN ===");
         
         try {
             List<Substitute> sustituciones = subController.getActiveSubstitutes();
@@ -752,6 +756,61 @@ public class AccountMenuController extends BaseMenuController {
         } catch (Exception e) {
             System.err.println("Error al finalizar sustitución: " + e.getMessage());
         }
+        readLine("\nPresione Enter para continuar...");
+    }
+
+    private void gestionActivacionCuentas() {
+        clearScreen();
+        mostrarMensajeCentrado("=== GESTIÓN DE ACTIVACIÓN DE CUENTAS ===");
+
+        try {
+            // Obtener solo cuentas de estudiantes pendientes
+            List<Account> cuentasPendientes = accountController.getAllAccounts().stream()
+                    .filter(a -> a.isEstudiante() && a.getStatus() == AccountStatus.PENDIENTE)
+                    .toList();
+
+            if (cuentasPendientes.isEmpty()) {
+                System.out.println("\nNo hay cuentas pendientes de activación.");
+                readLine("\nPresione Enter para continuar...");
+                return;
+            }
+
+            // Mostrar lista de cuentas pendientes
+            System.out.println("\nCuentas pendientes de activación:");
+            for (int i = 0; i < cuentasPendientes.size(); i++) {
+                Account a = cuentasPendientes.get(i);
+                System.out.printf("%d. %s %s (%s) - %s%n",
+                        i+1, a.getNombre(), a.getApellido(), a.getUser(), a.getEmail());
+            }
+
+            System.out.println("\n1. Aprobar cuenta");
+            System.out.println("2. Rechazar cuenta");
+            System.out.println("0. Volver");
+
+            int opcion = readIntOption("Selección: ");
+            if (opcion == 0) return;
+
+            int seleccion = readIntOption("Seleccione la cuenta (número): ") - 1;
+            if (seleccion < 0 || seleccion >= cuentasPendientes.size()) {
+                System.out.println("Selección inválida.");
+                return;
+            }
+
+            Account cuentaSeleccionada = cuentasPendientes.get(seleccion);
+
+            if (opcion == 1) {
+                accountController.approveStudentAccount(account.getUser(), cuentaSeleccionada.getId());
+                System.out.println("Cuenta aprobada exitosamente.");
+            } else if (opcion == 2) {
+                cuentaSeleccionada.rechazarCuenta();
+                accountController.saveChanges();
+                System.out.println("Cuenta rechazada exitosamente.");
+            }
+
+        } catch (AccountException e) {
+            System.err.println("Error al gestionar activación: " + e.getMessage());
+        }
+
         readLine("\nPresione Enter para continuar...");
     }
 }

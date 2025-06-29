@@ -62,9 +62,7 @@ public class FaQ extends Base<FaQ> {
      * @throws IllegalArgumentException Si la pregunta está vacía
      */
     public FaQ(String pregunta) {
-        if (pregunta == null || pregunta.trim().isEmpty()){
-            throw new IllegalArgumentException("La pregunta no puede estar vacía");
-        }
+        this.pregunta = pregunta;
         this.respuesta = "Solicitud pendiente de respuesta";
         this.pendiente = true;
         this.id = UUID.randomUUID().toString();
@@ -89,6 +87,19 @@ public class FaQ extends Base<FaQ> {
      * @return Texto de la respuesta
      */
     public String getRespuesta() { return respuesta; }
+
+    /**
+     * Obtiene el ID del usuario que respondió la pregunta.
+     * Si la pregunta no ha sido respondida, devuelve null.
+     * @return
+     */
+    public String getResponderID() { return responderID; }
+
+    /**
+     * Obtiene la fecha y hora de la respuesta.
+     * @return Fecha y hora de la respuesta, o null si no ha sido respondida
+     */
+    public LocalDateTime getFechaRespuesta() { return fechaRespuesta; }
     
     /**
      * Verifica si la pregunta está pendiente de respuesta.
@@ -132,23 +143,34 @@ public class FaQ extends Base<FaQ> {
     @Override
     public String toFile() {
         DateTimeFormatter fmt = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+        String fechaRespuestaStr = (fechaRespuesta != null) ? fechaRespuesta.format(fmt) : "";
         return String.join("|",
                 escapeForSerialization(id),
                 escapeForSerialization(pregunta),
                 escapeForSerialization(respuesta),
                 escapeForSerialization(String.valueOf(pendiente)),
                 escapeForSerialization(responderID),
-                escapeForSerialization(fechaRespuesta.format(fmt))
+                escapeForSerialization(fechaRespuestaStr)
                 );
     }
 
     @Override
     public FaQ fromFile(String line) {
         String[] parts = line.split("\\|");
-        FaQ faq = new FaQ(parts[1], parts[2], parts[4]);
+        FaQ faq = new FaQ();
         faq.id = parts[0];
+        faq.pregunta = parts[1];
+        faq.respuesta = parts[2];
         faq.pendiente = Boolean.parseBoolean(parts[3]);
-        faq.fechaRespuesta = LocalDateTime.parse(parts[5]);
+        // Responder ID: Puede quedar null si no hay valor
+        faq.responderID = (parts.length > 4 && parts[4] != null && !parts[4].trim().isEmpty()) 
+                            ? parts[4] 
+                            : null;
+
+        // Fecha Respuesta: Si está vacía, se deja null
+        faq.fechaRespuesta = (parts.length > 5 && parts[5] != null && !parts[5].isEmpty()) 
+                            ? LocalDateTime.parse(parts[5]) 
+                            : null;
         return faq;
     }
 

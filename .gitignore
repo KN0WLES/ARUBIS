@@ -2,3 +2,5 @@
 .idea/
 target/
 dto/
+resources/
+*.iml

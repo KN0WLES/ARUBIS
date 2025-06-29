@@ -5,19 +5,23 @@ public class ScheduleException extends Exception {
         super(message);
     }
 
+    // Sugerencia: por si el horario no existe
     public static ScheduleException notFound() {
         return new ScheduleException("Horario no encontrado");
     }
 
-    public static ScheduleException timeConflict() {
-        return new ScheduleException("Conflicto de horario detectado");
+    // Sugerencia: por si ya existe un horario igual
+    public static ScheduleException alreadyExists() {
+        return new ScheduleException("Ya existe un horario con estos datos");
     }
 
-    public static ScheduleException invalidTimeFormat() {
-        return new ScheduleException("Formato de hora inválido (use HH:mm)");
+    // Sugerencia: por si la lista de periodos está vacía
+    public static ScheduleException emptyPeriods() {
+        return new ScheduleException("El horario debe tener al menos un periodo");
     }
 
-    public static ScheduleException invalidDay() {
-        return new ScheduleException("Día de la semana inválido");
+    // Sugerencia: por si el grupo es inválido
+    public static ScheduleException invalidGroup() {
+        return new ScheduleException("El grupo es inválido o está vacío");
     }
 }
